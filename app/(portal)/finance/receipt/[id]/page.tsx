@@ -1,0 +1,122 @@
+import { createClient } from '@/utils/supabase/server'
+import { notFound } from 'next/navigation'
+import { Printer, Download, CheckCircle2 } from 'lucide-react'
+import Link from 'next/link'
+import PrintButton from '@/app/(portal)/results/student/[id]/PrintButton' // Reusing the print button
+
+// Helper
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(amount)
+}
+
+export default async function ReceiptPage({ params }: { params: Promise<{ id: string }> }) {
+  const supabase = await createClient()
+  const { id } = await params
+
+  // Fetch Payment Details with deep links
+  const { data: payment } = await supabase
+    .from('payments')
+    .select(`
+      *,
+      students (
+        admission_number,
+        current_class_id,
+        profiles:student_profile_link (first_name, last_name, email, phone_number),
+        classes (name)
+      ),
+      academic_sessions (name)
+    `)
+    .eq('id', id)
+    .single()
+
+  if (!payment) notFound()
+
+  return (
+    <div className="max-w-2xl mx-auto py-12 px-4 print:p-0 print:max-w-none">
+      
+      {/* Navigation (Hidden on Print) */}
+      <div className="flex items-center justify-between mb-8 print:hidden">
+        <Link href="/finance" className="text-sm font-medium text-slate-500 hover:text-slate-900">
+          &larr; Back to Finance
+        </Link>
+        <PrintButton />
+      </div>
+
+      {/* RECEIPT TICKET */}
+      <div className="bg-white border border-slate-200 shadow-sm rounded-none p-0 overflow-hidden print:border-none print:shadow-none">
+        
+        {/* Header */}
+        <div className="bg-slate-900 text-white p-8 text-center print:bg-white print:text-black print:border-b print:border-black">
+           <div className="flex justify-center mb-4">
+             <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center text-slate-900 font-bold text-xl border-2 border-transparent print:border-black">
+               A
+             </div>
+           </div>
+           <h1 className="text-2xl font-bold uppercase tracking-widest">Al-Adab School</h1>
+           <p className="text-slate-400 text-sm mt-1 print:text-slate-600">Excellence & Character</p>
+           <p className="text-slate-500 text-xs mt-4 print:hidden">Official Payment Receipt</p>
+        </div>
+
+        {/* Info Grid */}
+        <div className="p-8">
+           <div className="flex justify-between items-end border-b border-slate-100 pb-6 mb-6">
+              <div>
+                <p className="text-xs text-slate-400 uppercase font-bold">Receipt Reference</p>
+                <p className="text-lg font-mono font-bold text-slate-900">{payment.payment_reference}</p>
+              </div>
+              <div className="text-right">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 text-green-700 text-xs font-bold uppercase print:border print:border-green-600">
+                   <CheckCircle2 className="w-3 h-3" /> Paid
+                </div>
+              </div>
+           </div>
+
+           <div className="grid grid-cols-2 gap-y-8 gap-x-4 mb-8">
+              <div>
+                <p className="text-xs text-slate-400 uppercase font-bold mb-1">Student Name</p>
+                <p className="font-medium text-slate-900">
+                  {payment.students?.profiles?.first_name} {payment.students?.profiles?.last_name}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400 uppercase font-bold mb-1">Admission No</p>
+                <p className="font-mono text-slate-700">{payment.students?.admission_number}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400 uppercase font-bold mb-1">Class</p>
+                <p className="font-medium text-slate-900">{payment.students?.classes?.name}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400 uppercase font-bold mb-1">Session / Term</p>
+                <p className="font-medium text-slate-900">
+                  {payment.academic_sessions?.name} • {payment.term}
+                </p>
+              </div>
+           </div>
+
+           {/* Amount Box */}
+           <div className="bg-slate-50 border border-slate-100 rounded-xl p-6 text-center print:border-slate-300">
+              <p className="text-xs text-slate-500 uppercase font-bold mb-1">Amount Paid</p>
+              <p className="text-4xl font-black text-slate-900">{formatCurrency(payment.amount_paid)}</p>
+              <p className="text-xs text-slate-400 mt-2">Date: {new Date(payment.payment_date).toDateString()}</p>
+           </div>
+        </div>
+
+        {/* Footer */}
+        <div className="p-8 border-t border-slate-100 print:mt-12">
+           <div className="flex justify-between items-center">
+              <div className="text-xs text-slate-400">
+                 <p>Generated by Al-Adab Portal</p>
+                 <p>{new Date().toLocaleString()}</p>
+              </div>
+              <div className="text-right">
+                 <div className="h-10 w-32 border-b border-slate-300 mb-1"></div>
+                 <p className="text-[10px] uppercase font-bold text-slate-400">Bursar's Signature</p>
+              </div>
+           </div>
+        </div>
+
+      </div>
+    </div>
+  )
+}
