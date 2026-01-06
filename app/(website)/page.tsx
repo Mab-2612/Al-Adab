@@ -92,7 +92,7 @@ export default function LandingPage() {
               <div className="relative z-10 rounded-2xl overflow-hidden shadow-2xl rotate-2 hover:rotate-0 transition-all duration-500 border-4 border-white">
                 {/* 👇 UPDATED: Changed src to local file path */}
                 <Image 
-                  src="/principal.jpg?v=2" 
+                  src="/principal.jpg" 
                   alt="Principal" 
                   width={600} 
                   height={800} 
