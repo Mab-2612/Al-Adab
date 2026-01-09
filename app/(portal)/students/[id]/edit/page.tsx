@@ -1,7 +1,7 @@
 'use client'
 
 import { createClient } from '@/utils/supabase/client'
-import { updateStudent, generateStudentLogin, getStudentLoginEmail } from '../../actions' // 👈 Import new action
+import { updateStudent, generateStudentLogin, getStudentLoginEmail } from '../../actions'
 import { ArrowLeft, Save, Loader2, KeyRound, RefreshCcw, Copy, Check } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -16,7 +16,7 @@ export default function EditStudentPage({ params }: { params: Promise<{ id: stri
   const [isSaving, setIsSaving] = useState(false)
   const [isResetting, setIsResetting] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [loginEmail, setLoginEmail] = useState<string | null>(null) // 👈 State for login email
+  const [loginEmail, setLoginEmail] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
@@ -38,9 +38,9 @@ export default function EditStudentPage({ params }: { params: Promise<{ id: stri
           setIsSenior(true)
         }
         
-        // 👇 Fetch the actual Auth Email
+        // 👇 FIX: Fetch email and ensure it is not undefined
         const email = await getStudentLoginEmail(sData.profile_id)
-        setLoginEmail(email)
+        setLoginEmail(email || null) // Use 'null' if undefined to satisfy TypeScript
       }
       setLoading(false)
     }
@@ -77,7 +77,7 @@ export default function EditStudentPage({ params }: { params: Promise<{ id: stri
       toast.success(res.message)
       // Refresh the email display
       const email = await getStudentLoginEmail(student.profile_id)
-      setLoginEmail(email)
+      setLoginEmail(email || null) // Fixed here too
     } else {
       toast.error(res?.error)
     }
@@ -110,7 +110,6 @@ export default function EditStudentPage({ params }: { params: Promise<{ id: stri
       <form action={handleSubmit} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="p-6 md:p-8 space-y-8">
           
-          {/* ... Personal Info, Academic Info, Contact Info sections remain unchanged ... */}
           <div>
             <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">Personal Information</h3>
             <div className="grid md:grid-cols-2 gap-6">
@@ -179,7 +178,6 @@ export default function EditStudentPage({ params }: { params: Promise<{ id: stri
             </div>
           </div>
 
-          {/* 👇 NEW: Account Management Section */}
           <div className="bg-slate-50 p-5 rounded-lg border border-slate-200">
              <div className="flex items-center gap-2 mb-3">
                <KeyRound className="w-5 h-5 text-purple-600" />
