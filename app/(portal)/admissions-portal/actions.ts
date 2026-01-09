@@ -4,12 +4,38 @@ import { createAdminClient } from '@/utils/supabase/admin'
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-// ✅ APPROVE APPLICATION
+// Duplicate helper for self-containment within this action file
+async function generateUniqueEmail(supabase: any, firstName: string, lastName: string) {
+  const cleanFirst = firstName.trim().toLowerCase().replace(/[^a-z0-9]/g, '')
+  const cleanLast = lastName.trim().toLowerCase().replace(/[^a-z0-9]/g, '')
+  
+  const initial = cleanLast.charAt(0)
+  // 👇 CHANGED: Using hyphen instead of dot
+  const baseUsername = `${initial}-${cleanFirst}`
+  const domain = 'aladab.ng'
+  
+  const { data: existingUsers } = await supabase
+    .from('profiles')
+    .select('email')
+    .ilike('email', `${baseUsername}%@${domain}`)
+
+  if (!existingUsers || existingUsers.length === 0) return `${baseUsername}@${domain}`
+
+  const suffixes = existingUsers.map((u: any) => {
+    const localPart = u.email.split('@')[0]
+    const suffix = localPart.replace(baseUsername, '')
+    return suffix === '' ? 0 : parseInt(suffix) || 0
+  })
+
+  const maxSuffix = Math.max(...suffixes)
+  return `${baseUsername}${maxSuffix + 1}@${domain}`
+}
+
 export async function approveApplication(applicationId: string) {
   const supabaseAdmin = createAdminClient()
   const supabase = await createClient()
 
-  // 1. Fetch the Application Details
+  // 1. Fetch Application
   const { data: app, error: fetchError } = await supabase
     .from('admissions')
     .select('*')
@@ -18,69 +44,53 @@ export async function approveApplication(applicationId: string) {
 
   if (fetchError || !app) return { error: 'Application not found.' }
 
-  // 2. Generate Admission Number First (We need it for the fallback email)
-  // Format: ADAB/YEAR/RANDOM (e.g., ADAB/2025/4821)
+  // 2. Generate Admission Number
   const admissionNumber = `ADAB/${new Date().getFullYear()}/${Math.floor(1000 + Math.random() * 9000)}`
   const defaultPassword = 'password123'
 
-  // 3. Create the Auth User (Smart Retry Logic)
-  let userId = ''
-  let finalEmail = app.email
-  let emailNote = '' // To tell the admin if we changed the email
+  // 3. Generate Friendly Email
+  let loginEmail = await generateUniqueEmail(supabaseAdmin, app.first_name, app.last_name)
 
-  // Attempt 1: Use the provided email
-  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-    email: app.email,
-    password: defaultPassword,
-    email_confirm: true,
-    user_metadata: { first_name: app.first_name, last_name: app.last_name }
-  })
-
-  if (!authError && authData.user) {
-    userId = authData.user.id
-  } else if (authError?.message.includes('already registered') || authError?.status === 422) {
-    // ⚠️ COLLISION DETECTED: Parent is enrolling a second child
-    // Fallback: Generate a unique student email using Admission Number
-    // e.g., ADAB20254821@student.aladab.com (Sanitized)
-    const sanitizedAdm = admissionNumber.replace(/\//g, '')
-    finalEmail = `${sanitizedAdm}@student.aladab.com`.toLowerCase()
-    
-    console.log(`Email collision for ${app.email}. Generating student email: ${finalEmail}`)
-
-    const { data: retryData, error: retryError } = await supabaseAdmin.auth.admin.createUser({
-      email: finalEmail,
+  // 4. Create Auth User
+  let authData, authError;
+  for (let i = 0; i < 3; i++) {
+    const result = await supabaseAdmin.auth.admin.createUser({
+      email: loginEmail,
       password: defaultPassword,
       email_confirm: true,
       user_metadata: { first_name: app.first_name, last_name: app.last_name }
     })
-
-    if (retryError || !retryData.user) {
-      return { error: 'Failed to create user even with generated email: ' + retryError?.message }
+    
+    if (result.error && result.error.message.includes('already registered')) {
+       const base = loginEmail.split('@')[0]
+       loginEmail = `${base}${Math.floor(Math.random() * 99)}@aladab.ng`
+       continue;
     }
-
-    userId = retryData.user.id
-    emailNote = ` (Login: ${finalEmail})` // Inform admin of the new login
-  } else {
-    // Some other error occurred
-    return { error: 'Auth creation failed: ' + authError?.message }
+    authData = result.data;
+    authError = result.error;
+    break;
   }
 
-  // 4. Create Profile
-  // We use upsert to be safe, but usually this is a fresh insert
+  if (authError) return { error: 'Auth creation failed: ' + authError.message }
+  
+  const newUserId = authData?.user?.id
+  if (!newUserId) return { error: 'Failed to create user ID' }
+
+  // 5. Create Profile
   const { error: profileError } = await supabaseAdmin.from('profiles').upsert({
-    id: userId,
+    id: newUserId,
     first_name: app.first_name,
     last_name: app.last_name,
     role: 'student',
     phone_number: app.phone,
-    email: finalEmail // Save the actual login email here
+    email: app.email // Important: Keep parent email here for notifications
   })
 
   if (profileError) return { error: 'Profile creation failed: ' + profileError.message }
 
-  // 5. Create Student Record
+  // 6. Create Student Record
   const { error: studentError } = await supabaseAdmin.from('students').insert({
-    profile_id: userId,
+    profile_id: newUserId,
     admission_number: admissionNumber,
     current_class_id: app.class_id,
     gender: app.gender,
@@ -89,28 +99,26 @@ export async function approveApplication(applicationId: string) {
   })
 
   if (studentError) {
-    // Rollback: Delete the user if student data fails (keeps DB clean)
-    await supabaseAdmin.auth.admin.deleteUser(userId)
+    await supabaseAdmin.auth.admin.deleteUser(newUserId)
     return { error: 'Student record creation failed: ' + studentError.message }
   }
 
-  // 6. Update Admission Status
+  // 7. Update Admission Status
   await supabaseAdmin
     .from('admissions')
     .update({ status: 'approved' })
     .eq('id', applicationId)
 
   revalidatePath('/admissions-portal')
+  
   return { 
     success: true, 
-    message: `Approved! Admission No: ${admissionNumber}${emailNote}` 
+    message: `Approved! Login: ${loginEmail}` 
   }
 }
 
-// ❌ REJECT APPLICATION
 export async function rejectApplication(applicationId: string) {
   const supabase = await createClient()
-  
   const { error } = await supabase
     .from('admissions')
     .update({ status: 'rejected' })

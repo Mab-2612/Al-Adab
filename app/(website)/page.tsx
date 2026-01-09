@@ -205,7 +205,7 @@ export default function LandingPage() {
 
             <div className="relative h-[500px] rounded-3xl overflow-hidden shadow-2xl group">
               <Image 
-                src="/school.jpg" 
+                src="/school.jpg"
                 alt="School Facilities" 
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-700"

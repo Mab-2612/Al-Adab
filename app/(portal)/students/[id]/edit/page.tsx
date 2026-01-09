@@ -1,8 +1,8 @@
 'use client'
 
 import { createClient } from '@/utils/supabase/client'
-import { updateStudent } from '../../actions'
-import { ArrowLeft, Save, Loader2 } from 'lucide-react'
+import { updateStudent, generateStudentLogin, getStudentLoginEmail } from '../../actions' // 👈 Import new action
+import { ArrowLeft, Save, Loader2, KeyRound, RefreshCcw, Copy, Check } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { useEffect, useState, use } from 'react'
@@ -14,29 +14,33 @@ export default function EditStudentPage({ params }: { params: Promise<{ id: stri
   const [classes, setClasses] = useState<any[]>([])
   const [isSenior, setIsSenior] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [isResetting, setIsResetting] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [loginEmail, setLoginEmail] = useState<string | null>(null) // 👈 State for login email
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
       const supabase = createClient()
       
-      // Fetch Student
       const { data: sData } = await supabase
         .from('students')
         .select(`*, profiles:student_profile_link (*), classes (id, name, section)`)
         .eq('id', id)
         .single()
       
-      // Fetch Classes
       const { data: cData } = await supabase.from('classes').select('id, name, section').order('name')
       
       if (sData) {
         setStudent(sData)
         setClasses(cData || [])
-        // Check initial class
         if (sData.classes?.name.includes('SSS') || sData.classes?.section?.includes('Senior')) {
           setIsSenior(true)
         }
+        
+        // 👇 Fetch the actual Auth Email
+        const email = await getStudentLoginEmail(sData.profile_id)
+        setLoginEmail(email)
       }
       setLoading(false)
     }
@@ -62,6 +66,32 @@ export default function EditStudentPage({ params }: { params: Promise<{ id: stri
     }
   }
 
+  const handleLoginReset = async () => {
+    if(!confirm(`This will change the student's login email to an official '@aladab.ng' address and reset password to 'password123'. Continue?`)) return
+    
+    setIsResetting(true)
+    const res = await generateStudentLogin(student.id, student.profile_id, student.admission_number)
+    setIsResetting(false)
+
+    if (res?.success) {
+      toast.success(res.message)
+      // Refresh the email display
+      const email = await getStudentLoginEmail(student.profile_id)
+      setLoginEmail(email)
+    } else {
+      toast.error(res?.error)
+    }
+  }
+
+  const copyToClipboard = () => {
+    if (loginEmail) {
+      navigator.clipboard.writeText(loginEmail)
+      setCopied(true)
+      toast.success('Email copied to clipboard')
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
   if (loading) return <div className="p-12 text-center text-slate-500">Loading student details...</div>
   if (!student) notFound()
 
@@ -80,6 +110,7 @@ export default function EditStudentPage({ params }: { params: Promise<{ id: stri
       <form action={handleSubmit} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="p-6 md:p-8 space-y-8">
           
+          {/* ... Personal Info, Academic Info, Contact Info sections remain unchanged ... */}
           <div>
             <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">Personal Information</h3>
             <div className="grid md:grid-cols-2 gap-6">
@@ -88,7 +119,6 @@ export default function EditStudentPage({ params }: { params: Promise<{ id: stri
                 <input name="firstName" defaultValue={student.profiles?.first_name} required className="w-full p-3 border border-slate-200 rounded-lg outline-none" />
               </div>
               <div className="space-y-2">
-                {/* 👇 CHANGED LABEL */}
                 <label className="text-sm font-medium text-slate-700">Other Names</label>
                 <input name="lastName" defaultValue={student.profiles?.last_name} required className="w-full p-3 border border-slate-200 rounded-lg outline-none" />
               </div>
@@ -121,7 +151,6 @@ export default function EditStudentPage({ params }: { params: Promise<{ id: stri
                   ))}
                 </select>
               </div>
-              {/* Conditional Department */}
               {isSenior && (
                 <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
                   <label className="text-sm font-medium text-slate-700">Department</label>
@@ -143,8 +172,53 @@ export default function EditStudentPage({ params }: { params: Promise<{ id: stri
                 <label className="text-sm font-medium text-slate-700">Phone Number</label>
                 <input name="phone" defaultValue={student.profiles?.phone_number} type="tel" className="w-full p-3 border border-slate-200 rounded-lg outline-none" />
               </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">Guardian Email</label>
+                <input name="email" defaultValue={student.profiles?.email} type="email" className="w-full p-3 border border-slate-200 rounded-lg outline-none text-slate-500" />
+              </div>
             </div>
           </div>
+
+          {/* 👇 NEW: Account Management Section */}
+          <div className="bg-slate-50 p-5 rounded-lg border border-slate-200">
+             <div className="flex items-center gap-2 mb-3">
+               <KeyRound className="w-5 h-5 text-purple-600" />
+               <h4 className="font-bold text-slate-800 text-base">Portal Login Credentials</h4>
+             </div>
+
+             <div className="mb-4">
+               <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Current Login Email</label>
+               <div className="flex gap-2">
+                 <code className="bg-white px-3 py-2 rounded border border-slate-300 text-slate-700 font-mono text-sm flex-1">
+                   {loginEmail || 'Loading...'}
+                 </code>
+                 <button 
+                   type="button"
+                   onClick={copyToClipboard}
+                   className="p-2 bg-white border border-slate-300 rounded text-slate-500 hover:text-blue-600 hover:border-blue-500 transition-colors"
+                   title="Copy Email"
+                 >
+                   {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                 </button>
+               </div>
+             </div>
+
+             <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between border-t border-slate-200 pt-4">
+               <p className="text-xs text-slate-500 max-w-sm">
+                 Use this if the student forgot their email or needs to migrate to the new official format.
+               </p>
+               <button 
+                 type="button" 
+                 onClick={handleLoginReset}
+                 disabled={isResetting}
+                 className="text-xs font-bold text-white bg-purple-600 px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 shadow-sm whitespace-nowrap"
+               >
+                 {isResetting ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCcw className="w-3 h-3" />}
+                 Reset Login & Password
+               </button>
+             </div>
+          </div>
+
         </div>
 
         <div className="bg-slate-50 p-6 flex justify-end gap-4 border-t border-slate-200">
