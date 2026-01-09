@@ -16,16 +16,19 @@ export default function StudentActions({ studentId, profileId }: { studentId: st
     const res = await deleteStudent(studentId, profileId)
     setIsDeleting(false)
 
-    if (res?.success) {
+    // Check if 'success' exists in response (Success Case)
+    if (res && 'success' in res && res.success) {
       toast.success(res.message)
       setShowConfirm(false)
       setIsOpen(false)
     } else {
-      toast.error(res?.error || 'Failed to delete student')
+      // Handle Error Case (res has 'error' property)
+      // We cast res to any to safely access error, or check for it
+      const errorMessage = (res as any)?.error || 'Failed to delete student'
+      toast.error(errorMessage)
     }
   }
 
-  // If showing confirmation modal
   if (showConfirm) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -67,7 +70,6 @@ export default function StudentActions({ studentId, profileId }: { studentId: st
         <MoreVertical className="w-5 h-5" />
       </button>
 
-      {/* Dropdown Menu */}
       {isOpen && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)}></div>

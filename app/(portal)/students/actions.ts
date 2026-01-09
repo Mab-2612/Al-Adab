@@ -141,25 +141,16 @@ export async function updateStudent(studentId: string, profileId: string, formDa
   redirect('/students')
 }
 
-// 👇 THIS WAS MISSING OR BROKEN
+// 👇 UPDATED: Use { error } instead of { success: false, message }
 export async function deleteStudent(studentId: string, profileId: string) {
     const supabaseAdmin = createAdminClient()
     
-    // Delete auth user (Cascade deletes profile, and our SQL fixes ensure student record handles this)
     const { error } = await supabaseAdmin.auth.admin.deleteUser(profileId)
     
-    if (error) return { success: false, message: error.message }
+    if (error) return { error: error.message }
     
     revalidatePath('/students')
     return { success: true, message: 'Student deleted successfully' }
-}
-
-export async function getStudentLoginEmail(profileId: string) {
-  const supabaseAdmin = createAdminClient()
-  const { data: { user }, error } = await supabaseAdmin.auth.admin.getUserById(profileId)
-  
-  if (error || !user) return null
-  return user.email
 }
 
 export async function generateStudentLogin(studentId: string, profileId: string, admissionNumber: string) {
@@ -182,4 +173,12 @@ export async function generateStudentLogin(studentId: string, profileId: string,
 
   revalidatePath(`/students/${studentId}/edit`)
   return { success: true, message: `Login updated to: ${loginEmail}` }
+}
+
+export async function getStudentLoginEmail(profileId: string) {
+  const supabaseAdmin = createAdminClient()
+  const { data: { user }, error } = await supabaseAdmin.auth.admin.getUserById(profileId)
+  
+  if (error || !user) return null
+  return user.email
 }
