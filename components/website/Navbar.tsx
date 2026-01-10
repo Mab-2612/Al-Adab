@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { LogIn, GraduationCap, BookOpen, Menu, X } from 'lucide-react'
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -16,17 +16,35 @@ const navLinks = [
 export default function Navbar() {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
 
-  // Helper to check active state
-  // We check if pathname starts with href (for nested pages like /blog/slug), 
-  // but strictly for Home ('/') to avoid it being active everywhere.
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  // Close menu on route change
+  useEffect(() => {
+    setIsOpen(false)
+  }, [pathname])
+
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/'
     return pathname.startsWith(href)
   }
 
   return (
-    <nav className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200/60 transition-all">
+    <nav 
+      className={`fixed top-0 w-full z-50 transition-all duration-300 border-b ${
+        isOpen || scrolled 
+          ? 'bg-white border-slate-200 shadow-sm' // Solid when Open or Scrolled
+          : 'bg-white/80 backdrop-blur-md border-transparent' // Glass when Top & Closed
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           
@@ -83,8 +101,9 @@ export default function Navbar() {
 
           {/* MOBILE TOGGLE BUTTON */}
           <button 
-            className="md:hidden relative z-50 p-2 text-slate-600"
+            className="md:hidden relative z-50 p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
             onClick={() => setIsOpen(!isOpen)}
+            aria-label="Toggle menu"
           >
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -93,26 +112,31 @@ export default function Navbar() {
       </div>
 
       {/* MOBILE MENU DROPDOWN */}
-      <div className={`fixed inset-0 bg-white z-40 transition-transform duration-300 md:hidden pt-24 px-6 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-        <div className="flex flex-col space-y-6 text-lg font-medium text-slate-900">
+      <div 
+        className={`fixed inset-0 bg-white z-40 transition-transform duration-300 ease-in-out md:hidden pt-24 px-6 ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        <div className="flex flex-col space-y-6 text-lg font-medium text-slate-900 h-full overflow-y-auto pb-10">
           {navLinks.map((link) => (
             <Link 
               key={link.href}
               href={link.href} 
               onClick={() => setIsOpen(false)}
-              className={`pb-2 border-b border-slate-100 ${
+              className={`pb-4 border-b border-slate-100 flex justify-between items-center ${
                 isActive(link.href) ? 'text-blue-600 border-blue-600' : 'text-slate-600'
               }`}
             >
               {link.label}
+              {isActive(link.href) && <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>}
             </Link>
           ))}
           
-          <div className="pt-6 space-y-4">
+          <div className="pt-6 space-y-4 mt-auto">
             <Link 
               href="/admissions/apply" 
               onClick={() => setIsOpen(false)}
-              className="flex items-center justify-center gap-2 w-full bg-blue-600 text-white py-3 rounded-xl font-bold"
+              className="flex items-center justify-center gap-2 w-full bg-blue-600 text-white py-4 rounded-xl font-bold shadow-lg shadow-blue-600/20 active:scale-95 transition-transform"
             >
               <GraduationCap className="w-5 h-5" />
               Apply Now
@@ -120,7 +144,7 @@ export default function Navbar() {
             <Link 
               href="/login" 
               onClick={() => setIsOpen(false)}
-              className="flex items-center justify-center gap-2 w-full bg-slate-100 text-slate-700 py-3 rounded-xl font-bold"
+              className="flex items-center justify-center gap-2 w-full bg-slate-100 text-slate-700 py-4 rounded-xl font-bold hover:bg-slate-200 transition-colors"
             >
               <LogIn className="w-5 h-5" />
               Portal Login
