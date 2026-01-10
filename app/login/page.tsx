@@ -62,7 +62,7 @@ export default function LoginPage() {
         </div>
 
         <div className="relative z-10 text-sm text-blue-300">
-          &copy; {new Date().getFullYear()} Mora School. All rights reserved.
+          &copy; {new Date().getFullYear()} Al-Adab School. All rights reserved.
         </div>
       </div>
 
