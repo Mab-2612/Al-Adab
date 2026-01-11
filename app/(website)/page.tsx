@@ -7,9 +7,10 @@ export default function LandingPage() {
     <div className="bg-white text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900">
       
       {/* 1. HERO SECTION */}
-      <section className="relative min-h-[95vh] flex items-center justify-center overflow-hidden pt-20">
+      {/* 👇 Added 'pb-32' to create space for the stats banner overlap */}
+      <section className="relative min-h-[85vh] md:min-h-[95vh] flex items-center justify-center overflow-hidden pt-20 pb-32">
         
-        {/* Background Image with Blue Tint Overlay */}
+        {/* Background Image */}
         <div className="absolute inset-0 z-0">
           <Image 
             src="/Main.jpg" 
@@ -18,7 +19,6 @@ export default function LandingPage() {
             className="object-cover"
             priority
           />
-          {/* White gradient for clean text readability */}
           <div className="absolute inset-0 bg-gradient-to-b from-white/95 via-white/80 to-white"></div>
         </div>
 
@@ -69,9 +69,9 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:divide-x divide-blue-800">
             {[
               { label: "Years of Legacy", value: "15+" },
-              { label: "Active Students", value: "500+" },
-              { label: "Expert Staff", value: "65+" },
-              { label: "Exam Success", value: "90%" },
+              { label: "Active Students", value: "1,200+" },
+              { label: "Expert Staff", value: "85+" },
+              { label: "Exam Success", value: "100%" },
             ].map((stat, i) => (
               <div key={i} className="text-center">
                 <h3 className="text-4xl md:text-5xl font-black mb-2 text-white">{stat.value}</h3>
@@ -83,14 +83,13 @@ export default function LandingPage() {
       </div>
 
       {/* 3. PRINCIPAL'S WELCOME */}
-      <section className="py-24 bg-white relative">
+      <section className="py-5 md:py-24 bg-white relative">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div className="relative">
               <div className="absolute -top-4 -left-4 w-24 h-24 bg-blue-50 rounded-full z-0"></div>
               <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-slate-100 rounded-full z-0"></div>
               <div className="relative z-10 rounded-2xl overflow-hidden shadow-2xl rotate-2 hover:rotate-0 transition-all duration-500 border-4 border-white">
-                {/* 👇 UPDATED: Changed src to local file path */}
                 <Image 
                   src="/principal.jpg" 
                   alt="Principal" 
@@ -110,8 +109,8 @@ export default function LandingPage() {
                 "At Al-Adab, education goes beyond the classroom. We believe in nurturing the whole child – heart, mind, and soul. Our curriculum is designed to challenge students academically while grounding them in strong moral values."
               </p>
               <div className="pt-4 border-l-4 border-blue-600 pl-4 bg-slate-50 rounded-r-lg p-4">
-                <p className="font-bold text-xl text-slate-900">Mr. Yinus Aiwinnilomo</p>
-                <p className="text-slate-500 font-medium">Principal</p>
+                <p className="font-bold text-xl text-slate-900">Dr. A. A. Ibrahim</p>
+                <p className="text-slate-500 font-medium">Principal / Head of School</p>
               </div>
               <Link href="/about" className="inline-flex items-center text-blue-600 font-bold hover:text-blue-800 mt-4 transition-colors">
                 Read Full Message <ArrowRight className="w-4 h-4 ml-2" />
@@ -130,8 +129,6 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            
-            {/* Card 1: Blue Accent */}
             <div className="bg-white p-10 rounded-[2rem] shadow-sm hover:shadow-xl transition-all group border border-slate-100">
               <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-blue-600 transition-colors">
                 <BookOpen className="w-8 h-8 text-blue-600 group-hover:text-white transition-colors" />
@@ -142,7 +139,6 @@ export default function LandingPage() {
               </p>
             </div>
 
-            {/* Card 2: Dark Blue Accent (Morals) */}
             <div className="bg-blue-900 p-10 rounded-[2rem] shadow-xl text-white transform md:-translate-y-4">
               <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mb-8 backdrop-blur-sm">
                 <Star className="w-8 h-8 text-yellow-400" />
@@ -153,7 +149,6 @@ export default function LandingPage() {
               </p>
             </div>
 
-            {/* Card 3: Light Blue Accent */}
             <div className="bg-white p-10 rounded-[2rem] shadow-sm hover:shadow-xl transition-all group border border-slate-100">
               <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-blue-600 transition-colors">
                 <Trophy className="w-8 h-8 text-blue-600 group-hover:text-white transition-colors" />
@@ -163,7 +158,6 @@ export default function LandingPage() {
                 Practical skills in Coding, Robotics, Entrepreneurship, and Public Speaking for the modern world.
               </p>
             </div>
-
           </div>
         </div>
       </section>
@@ -181,12 +175,7 @@ export default function LandingPage() {
               </p>
               
               <ul className="space-y-4">
-                {[
-                  'Modern Science & Computer Labs',
-                  'E-Library with 5,000+ books',
-                  'Standard Sports Complex',
-                  'Secure Boarding Facilities'
-                ].map((item, i) => (
+                {['Modern Science & Computer Labs', 'E-Library with 5,000+ books', 'Standard Sports Complex', 'Secure Boarding Facilities'].map((item, i) => (
                   <li key={i} className="flex items-center gap-4 text-slate-700 font-medium text-lg">
                     <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
                       <ShieldCheck className="w-4 h-4" />
@@ -205,7 +194,7 @@ export default function LandingPage() {
 
             <div className="relative h-[500px] rounded-3xl overflow-hidden shadow-2xl group">
               <Image 
-                src="/school.jpg"
+                src="https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=2572&auto=format&fit=crop" 
                 alt="School Facilities" 
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-700"
@@ -221,8 +210,6 @@ export default function LandingPage() {
       {/* 6. CALL TO ACTION */}
       <section className="py-24 px-4 bg-slate-50">
         <div className="max-w-6xl mx-auto bg-blue-600 rounded-[3rem] overflow-hidden shadow-2xl shadow-blue-900/20 relative">
-          
-          {/* Abstract Shapes */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-black/10 rounded-full blur-3xl -ml-20 -mb-20"></div>
 
@@ -231,7 +218,7 @@ export default function LandingPage() {
               Join the Al-Adab Family
             </h2>
             <p className="text-blue-100 text-xl mb-12 max-w-2xl mx-auto font-medium">
-              Admissions are currently ongoing for JSS 1, JSS 2, and SSS 1. Secure a bright future for your child today.
+              Admissions are currently ongoing for JSS 1, JSS 2, SSS 1 and SSS 2. Secure a bright future for your child today.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link 

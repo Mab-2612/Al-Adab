@@ -2,8 +2,9 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LogIn, GraduationCap, BookOpen, Menu, X } from 'lucide-react'
+import { LogIn, GraduationCap, Menu, X } from 'lucide-react'
 import { useState, useEffect } from "react"
+import Image from 'next/image'
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -27,7 +28,6 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Close menu on route change
   useEffect(() => {
     setIsOpen(false)
   }, [pathname])
@@ -41,17 +41,25 @@ export default function Navbar() {
     <nav 
       className={`fixed top-0 w-full z-50 transition-all duration-300 border-b ${
         isOpen || scrolled 
-          ? 'bg-white border-slate-200 shadow-sm' // Solid when Open or Scrolled
-          : 'bg-white/80 backdrop-blur-md border-transparent' // Glass when Top & Closed
+          ? 'bg-white border-slate-200 shadow-sm' 
+          : 'bg-white/80 backdrop-blur-md border-transparent'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           
           {/* BRANDING */}
-          <Link href="/" className="flex items-center gap-3 group z-50 relative">
-            <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20 group-hover:shadow-blue-600/30 group-hover:scale-105 transition-all duration-300">
-              <BookOpen className="w-5 h-5" />
+          <Link href="/" className="flex items-center gap-0 group z-50 relative">
+            <div className="w-20 h-20 flex items-center justify-center group-hover:scale-105 transition-all duration-300 relative">
+              <Image 
+                src="/logo.png" 
+                alt="Logo" 
+                fill 
+                className="object-contain"
+                // 👇 FIX: Use unoptimized to guarantee crisp quality
+                unoptimized
+                priority
+              />
             </div>
             <div className="flex flex-col -space-y-0.5">
               <span className="font-extrabold text-xl text-slate-900 tracking-tight group-hover:text-blue-700 transition-colors duration-300">
@@ -113,18 +121,18 @@ export default function Navbar() {
 
       {/* MOBILE MENU DROPDOWN */}
       <div 
-        className={`fixed inset-0 bg-white z-40 transition-transform duration-300 ease-in-out md:hidden pt-24 px-6 ${
+        className={`fixed inset-0 bg-white z-40 transition-transform duration-300 ease-out md:hidden pt-24 px-6 ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="flex flex-col space-y-6 text-lg font-medium text-slate-900 h-full overflow-y-auto pb-10">
+        <div className="flex flex-col space-y-2 h-full pb-10">
           {navLinks.map((link) => (
             <Link 
               key={link.href}
               href={link.href} 
               onClick={() => setIsOpen(false)}
-              className={`pb-4 border-b border-slate-100 flex justify-between items-center ${
-                isActive(link.href) ? 'text-blue-600 border-blue-600' : 'text-slate-600'
+              className={`block w-full py-4 text-lg font-medium border-b border-slate-50 flex justify-between items-center ${
+                isActive(link.href) ? 'text-blue-600' : 'text-slate-900'
               }`}
             >
               {link.label}
@@ -132,7 +140,7 @@ export default function Navbar() {
             </Link>
           ))}
           
-          <div className="pt-6 space-y-4 mt-auto">
+          <div className="pt-8 space-y-4 mt-auto">
             <Link 
               href="/admissions/apply" 
               onClick={() => setIsOpen(false)}

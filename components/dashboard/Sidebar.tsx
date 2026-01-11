@@ -3,24 +3,14 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { 
-  LayoutDashboard, 
-  Users, 
-  GraduationCap, 
-  CreditCard, 
-  FileText, 
-  Settings, 
-  LogOut,
-  BookOpen,
-  CalendarCheck,
-  Megaphone,
-  Globe,
-  Shield,
-  Loader2
+  LayoutDashboard, Users, GraduationCap, CreditCard, FileText, Settings, LogOut, BookOpen, CalendarCheck, Megaphone, Globe, Shield, Loader2
 } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 
+// 👇 UPDATED: Removed 'parent' from roles
 const allMenuItems = [
   { icon: LayoutDashboard, label: 'Overview', href: '/dashboard', roles: ['admin', 'teacher', 'student'] },
   { icon: Users, label: 'Students', href: '/students', roles: ['admin', 'teacher'] },
@@ -76,19 +66,25 @@ export default function Sidebar() {
   )
 
   return (
-    // 👇 FIX 1: Added 'overflow-hidden' to parent to prevent outer scrolling
     <aside className="w-64 bg-slate-900 text-white flex flex-col h-full border-r border-slate-800 overflow-hidden">
       
       {/* Brand */}
       <div className="h-16 flex items-center px-6 border-b border-slate-800 shrink-0">
-        <div className="flex items-center gap-2 font-bold text-xl">
-          <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white">A</div>
-          <span>Al-Adab Portal</span>
+        <div className="flex items-center gap-0 font-bold text-xl">
+          <div className="relative w-20 h-20 shrink-0">
+             <Image 
+               src="/logo.png" 
+               alt="Logo" 
+               fill 
+               sizes="40px" 
+               className="object-contain" 
+             />
+          </div>
+          <span>Al-Adab</span>
         </div>
       </div>
 
       {/* Navigation */}
-      {/* 👇 FIX 2: Added 'min-h-0' which fixes flexbox scrolling bugs */}
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar min-h-0">
         
         {loading ? (

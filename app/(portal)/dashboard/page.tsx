@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import StudentDashboard from '@/components/dashboard/StudentDashboard'
 import TeacherDashboard from '@/components/dashboard/TeacherDashboard'
 import NoticeBoard from '@/components/dashboard/NoticeBoard'
-import { Users, DollarSign, Bell, GraduationCap, AlertCircle } from 'lucide-react'
+import { Users, Bell, GraduationCap, AlertCircle, ShieldAlert } from 'lucide-react'
 import Link from 'next/link'
 
 // Helper for currency formatting
@@ -60,7 +60,11 @@ async function AdminDashboard({ profile, supabase }: { profile: any, supabase: a
            <div className="text-3xl font-bold text-gray-900">{teacherCount}</div>
         </div>
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-           <div className="flex justify-between items-center mb-4"><h3 className="text-sm font-medium text-gray-500">Total Revenue</h3><DollarSign className="w-5 h-5 text-green-600" /></div>
+           <div className="flex justify-between items-center mb-4">
+             <h3 className="text-sm font-medium text-gray-500">Total Revenue</h3>
+             {/* 👇 FIXED: Replaced DollarSign with Naira Symbol */}
+             <span className="text-xl font-bold text-green-600">₦</span>
+           </div>
            <div className="text-3xl font-bold text-gray-900">{formatCurrency(totalRevenue)}</div>
         </div>
       </div>
@@ -70,7 +74,7 @@ async function AdminDashboard({ profile, supabase }: { profile: any, supabase: a
         <div className="lg:col-span-2 space-y-6">
            <div className="p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded-r-lg flex justify-between items-center">
             <div><p className="font-bold">System Status</p><p className="text-sm">Admissions are currently OPEN.</p></div>
-            <Link href="/admissions-portal" className="text-sm font-bold underline hover:text-yellow-900">Review Apps</Link>
+            <Link href="/admissions-portal" className="text-sm font-bold underline hover:text-yellow-900">Applications</Link>
           </div>
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
              <h3 className="font-bold text-gray-900 mb-4">Quick Actions</h3>
@@ -99,6 +103,8 @@ export default async function Dashboard() {
       .select('*')
       .eq('id', user.id)
       .single()
+    
+    if (!profile) return <div className="p-12 text-center text-slate-500">Profile not found. Contact support.</div>
 
     // 1. TEACHER VIEW
     if (profile?.role === 'teacher') {
