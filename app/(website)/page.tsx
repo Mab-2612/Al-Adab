@@ -109,8 +109,8 @@ export default function LandingPage() {
                 "At Al-Adab, education goes beyond the classroom. We believe in nurturing the whole child – heart, mind, and soul. Our curriculum is designed to challenge students academically while grounding them in strong moral values."
               </p>
               <div className="pt-4 border-l-4 border-blue-600 pl-4 bg-slate-50 rounded-r-lg p-4">
-                <p className="font-bold text-xl text-slate-900">Dr. A. A. Ibrahim</p>
-                <p className="text-slate-500 font-medium">Principal / Head of School</p>
+                <p className="font-bold text-xl text-slate-900">Mr. Yinus Aiwinnilomo</p>
+                <p className="text-slate-500 font-medium">Principal</p>
               </div>
               <Link href="/about" className="inline-flex items-center text-blue-600 font-bold hover:text-blue-800 mt-4 transition-colors">
                 Read Full Message <ArrowRight className="w-4 h-4 ml-2" />
