@@ -3,14 +3,25 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { 
-  LayoutDashboard, Users, GraduationCap, CreditCard, FileText, Settings, LogOut, BookOpen, CalendarCheck, Megaphone, Globe, Shield, Loader2
+  LayoutDashboard, 
+  Users, 
+  GraduationCap, 
+  CreditCard, 
+  FileText, 
+  Settings, 
+  LogOut,
+  BookOpen,
+  CalendarCheck,
+  Megaphone,
+  Globe,
+  Shield,
+  Loader2
 } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 
-// 👇 UPDATED: Removed 'parent' from roles
 const allMenuItems = [
   { icon: LayoutDashboard, label: 'Overview', href: '/dashboard', roles: ['admin', 'teacher', 'student'] },
   { icon: Users, label: 'Students', href: '/students', roles: ['admin', 'teacher'] },
@@ -26,7 +37,8 @@ const allMenuItems = [
   { icon: Settings, label: 'Settings', href: '/settings', roles: ['admin', 'teacher', 'student'] },
 ]
 
-export default function Sidebar() {
+// 👇 UPDATED: Accepts optional onClose prop
+export default function Sidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
@@ -77,7 +89,7 @@ export default function Sidebar() {
                alt="Logo" 
                fill 
                sizes="40px" 
-               className="object-contain" 
+               className="object-contain p-0.5" 
              />
           </div>
           <span>Al-Adab</span>
@@ -102,6 +114,8 @@ export default function Sidebar() {
               <Link 
                 key={item.href} 
                 href={item.href}
+                // 👇 UPDATED: Close sidebar when link is clicked
+                onClick={onClose}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                   isActive 
                     ? 'bg-blue-600 text-white' 

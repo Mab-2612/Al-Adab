@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import StudentDashboard from '@/components/dashboard/StudentDashboard'
 import TeacherDashboard from '@/components/dashboard/TeacherDashboard'
 import NoticeBoard from '@/components/dashboard/NoticeBoard'
-import { Users, Bell, GraduationCap, AlertCircle, ShieldAlert } from 'lucide-react'
+import { Users, DollarSign, Bell, GraduationCap, AlertCircle, ShieldAlert } from 'lucide-react'
 import Link from 'next/link'
 
 // Helper for currency formatting
@@ -60,11 +60,7 @@ async function AdminDashboard({ profile, supabase }: { profile: any, supabase: a
            <div className="text-3xl font-bold text-gray-900">{teacherCount}</div>
         </div>
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-           <div className="flex justify-between items-center mb-4">
-             <h3 className="text-sm font-medium text-gray-500">Total Revenue</h3>
-             {/* 👇 FIXED: Replaced DollarSign with Naira Symbol */}
-             <span className="text-xl font-bold text-green-600">₦</span>
-           </div>
+           <div className="flex justify-between items-center mb-4"><h3 className="text-sm font-medium text-gray-500">Total Revenue</h3><span className="text-xl font-bold text-green-600">₦</span></div>
            <div className="text-3xl font-bold text-gray-900">{formatCurrency(totalRevenue)}</div>
         </div>
       </div>
@@ -93,11 +89,15 @@ async function AdminDashboard({ profile, supabase }: { profile: any, supabase: a
 // --- MAIN CONTROLLER ---
 export default async function Dashboard() {
   const supabase = await createClient()
+
+  // 👇 AUTH CHECK MOVED HERE (Before try block)
+  // This allows the redirect exception to bubble up correctly to Next.js
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    redirect('/login')
+  }
   
   try {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) redirect('/login')
-
     const { data: profile } = await supabase
       .from('profiles')
       .select('*')
@@ -107,22 +107,33 @@ export default async function Dashboard() {
     if (!profile) return <div className="p-12 text-center text-slate-500">Profile not found. Contact support.</div>
 
     // 1. TEACHER VIEW
-    if (profile?.role === 'teacher') {
+    if (profile.role === 'teacher') {
       return <TeacherDashboard userId={user.id} profile={profile} />
     }
 
     // 2. STUDENT VIEW
-    if (profile?.role === 'student') {
+    if (profile.role === 'student') {
       const { data: studentRecord } = await supabase.from('students').select('id').eq('profile_id', user.id).single()
       if (studentRecord) return <StudentDashboard studentId={studentRecord.id} />
-      return <div className="p-8 text-red-500">Error: Student record not found.</div>
+      return <div className="p-8 text-red-500">Error: Student record not found for this user.</div>
     }
 
     // 3. ADMIN VIEW
-    return <AdminDashboard profile={profile} supabase={supabase} />
+    if (profile.role === 'admin') {
+      return <AdminDashboard profile={profile} supabase={supabase} />
+    }
+
+    // 4. UNKNOWN ROLE
+    return (
+      <div className="min-h-[50vh] flex flex-col items-center justify-center text-slate-500">
+        <ShieldAlert className="w-12 h-12 mb-4 text-red-500" />
+        <h3 className="text-xl font-bold text-slate-900">Access Denied</h3>
+        <p>Your account does not have a valid role assigned.</p>
+      </div>
+    )
 
   } catch (error) {
-    console.error("Auth Error:", error)
-    return <div className="p-8 text-center text-red-500">System Error. Please refresh.</div>
+    console.error("Dashboard Logic Error:", error)
+    return <div className="p-8 text-center text-red-500">System Error. Please try refreshing.</div>
   }
 }

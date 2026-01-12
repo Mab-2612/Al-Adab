@@ -39,7 +39,8 @@ export default function Navbar() {
 
   return (
     <nav 
-      className={`fixed top-0 w-full z-50 transition-all duration-300 border-b ${
+      className={`fixed top-0 w-full z-50 border-b ${
+        // 👇 UPDATED: Removed 'transition-all duration-300' to make bg change instant
         isOpen || scrolled 
           ? 'bg-white border-slate-200 shadow-sm' 
           : 'bg-white/80 backdrop-blur-md border-transparent'
@@ -49,7 +50,7 @@ export default function Navbar() {
         <div className="flex justify-between items-center h-16">
           
           {/* BRANDING */}
-          <Link href="/" className="flex items-center gap-0 group z-50 relative">
+          <Link href="/" className="flex items-center gap-1.5 group z-50 relative">
             <div className="w-20 h-20 flex items-center justify-center group-hover:scale-105 transition-all duration-300 relative">
               <Image 
                 src="/logo.png" 

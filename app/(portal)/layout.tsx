@@ -11,7 +11,6 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
   const [userProfile, setUserProfile] = useState<any>(null)
   const supabase = createClient()
 
-  // Fetch user profile for the Header
   useEffect(() => {
     async function getUser() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -27,7 +26,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
     <div className="min-h-screen bg-slate-50 flex">
       
       {/* 1. DESKTOP SIDEBAR (Hidden on Mobile) */}
-      <div className="hidden md:flex fixed left-0 top-0 bottom-0 z-50">
+      <div className="hidden md:flex fixed left-0 top-0 bottom-0 z-50 h-full">
         <Sidebar />
       </div>
 
@@ -42,17 +41,17 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
           
           {/* Sidebar Panel */}
           <div className="absolute left-0 top-0 bottom-0 w-64 bg-slate-900 shadow-2xl transition-transform transform translate-x-0">
-            <div className="relative h-full">
-              {/* Close Button */}
+            <div className="relative h-full flex flex-col">
+              {/* Close Button - positioned inside the sidebar context for clarity */}
               <button 
                 onClick={() => setSidebarOpen(false)}
-                className="absolute top-4 right-4 text-slate-400 hover:text-white"
+                className="absolute top-4 right-4 text-slate-400 hover:text-white z-10 p-1"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5" />
               </button>
               
-              {/* Render Sidebar Content */}
-              <Sidebar /> 
+              {/* Render Sidebar Content with Close Handler */}
+              <Sidebar onClose={() => setSidebarOpen(false)} /> 
             </div>
           </div>
         </div>
@@ -61,7 +60,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
       {/* 3. MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col md:ml-64 transition-all duration-300 min-h-screen">
         
-        {/* New Responsive Header */}
+        {/* Header */}
         <Header 
           onMenuClick={() => setSidebarOpen(true)} 
           userProfile={userProfile} 

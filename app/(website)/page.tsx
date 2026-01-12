@@ -121,7 +121,7 @@ export default function LandingPage() {
       </section>
 
       {/* 4. ACADEMIC PILLARS */}
-      <section className="py-24 bg-slate-50">
+      <section className="pt-16 pb-4 bg-slate-50">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-20">
             <h2 className="text-blue-600 font-bold tracking-widest uppercase mb-4">Why Al-Adab?</h2>
@@ -163,7 +163,7 @@ export default function LandingPage() {
       </section>
 
       {/* 5. FACILITIES */}
-      <section className="py-24 bg-white">
+      <section className="pt-24 pb-0 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid md:grid-cols-2 gap-8">
             <div className="space-y-8 flex flex-col justify-center">

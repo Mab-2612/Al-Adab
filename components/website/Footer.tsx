@@ -55,7 +55,7 @@ export default function Footer() {
           </div>
 
           {/* Information */}
-          <div>
+          {/* <div>
             <h3 className="text-white font-bold mb-6">Information</h3>
             <ul className="space-y-4 text-sm">
               <li><Link href="/login" className="hover:text-blue-400 transition-colors">Student Portal</Link></li>
@@ -64,7 +64,7 @@ export default function Footer() {
               <li><Link href="/careers" className="hover:text-blue-400 transition-colors">Careers</Link></li>
               <li><Link href="/privacy" className="hover:text-blue-400 transition-colors">Privacy Policy</Link></li>
             </ul>
-          </div>
+          </div> */}
 
           {/* Contact */}
           <div>
@@ -72,28 +72,28 @@ export default function Footer() {
             <ul className="space-y-4 text-sm">
               <li className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-blue-500 shrink-0" />
-                <span>12 Al-Adab Avenue, GRA Extension, Ilorin, Nigeria.</span>
+                <span>12 Al-Adab Group Of Schools, Gbede-Ogun, Off Akanran Rd., Ibadan.</span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-blue-500 shrink-0" />
-                <span>+234 800 123 4567</span>
+                <span>+234 906 433 0233</span>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-blue-500 shrink-0" />
-                <span>admissions@aladab.edu.ng</span>
+                <span>aladab008@gmail.com</span>
               </li>
             </ul>
           </div>
 
         </div>
 
-        <div className="border-t border-slate-900 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
+        <div className="border-t border-slate-900 pt-500 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
           <p>&copy; {new Date().getFullYear()} Al-Adab School. All rights reserved.</p>
-          <div className="flex gap-6">
+          {/* <div className="flex gap-6">
             <Link href="#" className="hover:text-white transition-colors">Terms</Link>
             <Link href="#" className="hover:text-white transition-colors">Privacy</Link>
             <Link href="#" className="hover:text-white transition-colors">Cookies</Link>
-          </div>
+          </div> */}
         </div>
       </div>
     </footer>
