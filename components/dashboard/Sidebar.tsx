@@ -22,23 +22,24 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 
+// 👇 UPDATED ROLES: Added 'principal' to specific items only
 const allMenuItems = [
-  { icon: LayoutDashboard, label: 'Overview', href: '/dashboard', roles: ['admin', 'teacher', 'student'] },
-  { icon: Users, label: 'Students', href: '/students', roles: ['admin', 'teacher'] },
-  { icon: BookOpen, label: 'Academics', href: '/academics/subjects', roles: ['admin', 'teacher'] },
-  { icon: Users, label: 'Classes', href: '/academics/classes', roles: ['admin', 'teacher'] },
-  { icon: CalendarCheck, label: 'Attendance', href: '/attendance', roles: ['admin', 'teacher'] },
-  { icon: GraduationCap, label: 'Results', href: '/results/upload', roles: ['admin', 'teacher'] },
-  { icon: CreditCard, label: 'Finance', href: '/finance', roles: ['admin'] },
-  { icon: FileText, label: 'Admissions', href: '/admissions-portal', roles: ['admin'] },
-  { icon: Megaphone, label: 'Notices', href: '/communication', roles: ['admin'] },
-  { icon: Globe, label: 'Website CMS', href: '/website-admin', roles: ['admin'] },
-  { icon: Shield, label: 'Staff', href: '/staff', roles: ['admin'] },
-  { icon: Settings, label: 'Settings', href: '/settings', roles: ['admin', 'teacher', 'student'] },
+  { icon: LayoutDashboard, label: 'Overview', href: '/dashboard', roles: ['admin', 'principal', 'teacher', 'student'] },
+  { icon: Users, label: 'Students', href: '/students', roles: ['admin', 'principal', 'teacher'] },
+  { icon: BookOpen, label: 'Academics', href: '/academics/subjects', roles: ['admin', 'principal', 'teacher'] },
+  { icon: Users, label: 'Classes', href: '/academics/classes', roles: ['admin', 'principal', 'teacher'] },
+  { icon: CalendarCheck, label: 'Attendance', href: '/attendance', roles: ['admin', 'teacher'] }, // Principal hidden
+  { icon: GraduationCap, label: 'Results', href: '/results/upload', roles: ['admin', 'principal', 'teacher'] },
+  { icon: CreditCard, label: 'Finance', href: '/finance', roles: ['admin'] }, // Principal hidden
+  { icon: FileText, label: 'Admissions', href: '/admissions-portal', roles: ['admin'] }, // Principal hidden
+  { icon: Megaphone, label: 'Notices', href: '/communication', roles: ['admin', 'principal'] },
+  { icon: Globe, label: 'Website CMS', href: '/website-admin', roles: ['admin'] }, // Principal hidden
+  { icon: Shield, label: 'Staff', href: '/staff', roles: ['admin', 'principal'] },
+  { icon: Settings, label: 'Settings', href: '/settings', roles: ['admin', 'principal', 'teacher', 'student'] },
 ]
 
-// 👇 UPDATED: Accepts optional onClose prop
 export default function Sidebar({ onClose }: { onClose?: () => void }) {
+  // ... (Rest of the component remains exactly the same as before)
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
@@ -90,6 +91,7 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
                fill 
                sizes="40px" 
                className="object-contain p-0.5" 
+               unoptimized
              />
           </div>
           <span>Al-Adab</span>
@@ -114,7 +116,6 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
               <Link 
                 key={item.href} 
                 href={item.href}
-                // 👇 UPDATED: Close sidebar when link is clicked
                 onClick={onClose}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                   isActive 

@@ -9,6 +9,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Al-Adab School Portal",
   description: "School Management System",
+  
 };
 
 export default function RootLayout({

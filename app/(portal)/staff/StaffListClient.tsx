@@ -1,20 +1,21 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Trash2, Mail, Phone, Pencil, AlertTriangle, Loader2, ShieldCheck } from 'lucide-react'
+import { Plus, Trash2, Mail, Phone, Pencil, AlertTriangle, Loader2, ShieldCheck, Crown } from 'lucide-react'
 import { deleteStaff } from './actions'
 import AddStaffModal from './AddStaffModal'
 import EditStaffModal from './EditStaffModal'
 import { toast } from 'sonner'
 
-// 👇 Added subjects to props type
 export default function StaffListClient({ 
   staff, 
-  currentUserId, 
+  currentUserId,
+  currentUserRole,
   subjects 
 }: { 
   staff: any[], 
-  currentUserId: string, 
+  currentUserId: string,
+  currentUserRole: string,
   subjects: any[] 
 }) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
@@ -36,11 +37,14 @@ export default function StaffListClient({
     }
   }
 
+  // Determine permissions
+  const isSuperAdmin = currentUserRole === 'admin'
+
   return (
     <>
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         
-        {/* Add Button */}
+        {/* Add Button - DYNAMIC TEXT */}
         <button 
           onClick={() => setIsAddModalOpen(true)}
           className="border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center p-8 hover:border-blue-500 hover:bg-blue-50/50 transition-all group min-h-[200px] cursor-pointer select-none"
@@ -49,12 +53,18 @@ export default function StaffListClient({
             <Plus className="w-6 h-6" />
           </div>
           <p className="font-bold text-slate-700">Add New Staff</p>
-          <p className="text-xs text-slate-400">Teacher or Admin</p>
+          {/* 👇 UPDATED: Text changes based on role */}
+          <p className="text-xs text-slate-400 mt-1">
+            {isSuperAdmin ? 'Teacher, Admin or Principal' : 'Teacher Account'}
+          </p>
         </button>
 
         {/* Staff Cards */}
         {staff.map((member) => {
           const isMe = member.id === currentUserId;
+          const isPrincipal = member.role === 'principal';
+          const isAdmin = member.role === 'admin';
+
           return (
             <div key={member.id} className={`p-6 rounded-xl border shadow-sm relative group transition-colors flex flex-col justify-between cursor-default select-none ${
               isMe ? 'bg-blue-50/50 border-blue-200 ring-1 ring-blue-200' : 'bg-white border-slate-200 hover:border-blue-300'
@@ -62,22 +72,24 @@ export default function StaffListClient({
               <div>
                 <div className="flex justify-between items-start mb-4">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-sm ${
-                    member.role === 'admin' ? 'bg-purple-600' : 'bg-blue-600'
+                    isAdmin ? 'bg-purple-600' : isPrincipal ? 'bg-orange-600' : 'bg-blue-600'
                   }`}>
-                    {member.first_name?.[0]}{member.last_name?.[0]}
+                    {isAdmin ? <ShieldCheck className="w-5 h-5"/> : isPrincipal ? <Crown className="w-5 h-5"/> : member.first_name?.[0]}
                   </div>
                   
                   {isMe ? (
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border bg-blue-100 text-blue-700 border-blue-200 shadow-sm">
-                      <ShieldCheck className="w-3 h-3" /> You
+                      You
                     </span>
                   ) : (
                     <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide border ${
-                      member.role === 'admin' 
-                        ? 'bg-purple-50 text-purple-700 border-purple-100' 
+                      isAdmin
+                        ? 'bg-purple-50 text-purple-700 border-purple-100'
+                        : isPrincipal
+                        ? 'bg-orange-50 text-orange-700 border-orange-100'
                         : 'bg-slate-100 text-slate-600 border-slate-200'
                     }`}>
-                      {member.role}
+                      {member.role === 'admin' ? 'Super Admin' : member.role}
                     </span>
                   )}
                 </div>
@@ -88,9 +100,8 @@ export default function StaffListClient({
                 <p className="text-xs text-slate-400 font-mono mb-1 truncate cursor-text select-text">
                   {member.email}
                 </p>
-                {/* Show specialization if teacher */}
                 {member.role === 'teacher' && member.specialization && (
-                  <span className="inline-block px-2 py-0.5 rounded bg-orange-50 text-orange-600 text-[10px] font-bold border border-orange-100 mb-3">
+                  <span className="inline-block px-2 py-0.5 rounded bg-blue-50 text-blue-600 text-[10px] font-bold border border-blue-100 mb-3">
                     {member.specialization} Teacher
                   </span>
                 )}
@@ -103,6 +114,7 @@ export default function StaffListClient({
                 </div>
               </div>
 
+              {/* Action Buttons */}
               <div className={`mt-6 pt-4 border-t border-slate-100 flex gap-3 transition-opacity ${isMe ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                  <button 
                    onClick={() => setEditingStaff(member)}
@@ -111,6 +123,7 @@ export default function StaffListClient({
                    <Pencil className="w-3 h-3" /> Edit
                  </button>
                  
+                 {/* Only show Delete if it's NOT me */}
                  {!isMe && (
                    <button 
                      onClick={() => setDeletingId(member.id)}
@@ -125,10 +138,22 @@ export default function StaffListClient({
         })}
       </div>
 
-      {/* 👇 PASS SUBJECTS TO MODALS */}
-      {isAddModalOpen && <AddStaffModal onClose={() => setIsAddModalOpen(false)} subjects={subjects} />}
+      {isAddModalOpen && (
+        <AddStaffModal 
+          onClose={() => setIsAddModalOpen(false)} 
+          subjects={subjects} 
+          currentUserRole={currentUserRole} 
+        />
+      )}
       
-      {editingStaff && <EditStaffModal staff={editingStaff} onClose={() => setEditingStaff(null)} subjects={subjects} />}
+      {editingStaff && (
+        <EditStaffModal 
+          staff={editingStaff} 
+          onClose={() => setEditingStaff(null)} 
+          subjects={subjects}
+          currentUserRole={currentUserRole}
+        />
+      )}
 
       {/* Delete Modal */}
       {deletingId && (

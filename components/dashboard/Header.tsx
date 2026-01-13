@@ -1,15 +1,17 @@
 'use client'
 
-import { Bell, Menu, Search, ChevronDown } from 'lucide-react'
+import { Menu, ChevronDown } from 'lucide-react' // Removed Bell from here
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import NotificationBell from './NotificationBell' // 👈 Import new component
 
-// 👇 UPDATED: Removed 'parent'
+// Map database roles to Display Titles
 const roleLabels: Record<string, string> = {
-  admin: 'Super Admin',
+  admin: 'Diretor',
   teacher: 'Academic Staff',
-  student: 'Student'
+  student: 'Student',
+  parent: 'Parent'
 }
 
 export default function Header({ onMenuClick, userProfile }: { onMenuClick: () => void, userProfile: any }) {
@@ -33,6 +35,7 @@ export default function Header({ onMenuClick, userProfile }: { onMenuClick: () =
         
         {/* LEFT SIDE: Branding */}
         <div className="flex items-center gap-3">
+          
           <div className="md:hidden font-bold text-lg text-slate-800 flex items-center gap-0">
             <div className="relative w-20 h-20 shrink-0 rounded-lg flex items-center justify-center overflow-hidden border-slate-100">
                <Image 
@@ -52,15 +55,15 @@ export default function Header({ onMenuClick, userProfile }: { onMenuClick: () =
           </div>
         </div>
 
-        {/* RIGHT SIDE */}
+        {/* RIGHT SIDE: Profile, Notifications & Hamburger */}
         <div className="flex items-center gap-2 sm:gap-4">
-          <button className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors">
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-          </button>
+          
+          {/* 👇 REPLACED: Smart Bell Component */}
+          <NotificationBell />
 
           <div className="h-8 w-px bg-slate-200 mx-1 hidden sm:block"></div>
 
+          {/* User Profile */}
           <div className="flex items-center gap-3 pl-1 cursor-pointer group">
             <div className={`w-9 h-9 rounded-full border flex items-center justify-center font-bold text-white shadow-sm ${
                userProfile?.role === 'admin' ? 'bg-purple-600 border-purple-200' : 'bg-blue-600 border-blue-200'
@@ -79,6 +82,7 @@ export default function Header({ onMenuClick, userProfile }: { onMenuClick: () =
             <ChevronDown className="w-4 h-4 text-slate-400 hidden sm:block" />
           </div>
 
+          {/* Hamburger (Mobile) */}
           <div className="pl-2 border-l border-slate-200 ml-1 md:hidden">
             <button 
               onClick={onMenuClick}

@@ -1,6 +1,18 @@
 import Link from 'next/link'
-import { Facebook, Twitter, Instagram, Linkedin, MapPin, Phone, Mail } from 'lucide-react'
+import { Facebook, Twitter, Instagram, MapPin, Phone, Mail } from 'lucide-react'
 import Image from 'next/image'
+
+// Custom TikTok Icon Component since it's not in standard Lucide set
+const TiktokIcon = ({ className }: { className?: string }) => (
+  <svg 
+    viewBox="0 0 24 24" 
+    fill="currentColor" 
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+  </svg>
+)
 
 export default function Footer() {
   return (
@@ -10,13 +22,13 @@ export default function Footer() {
           
           {/* Brand Column */}
           <div className="space-y-6">
-            <div className="flex items-center gap-0 text-white">
-              <div className="relative w-20 h-20 shrink-0">
-                {/* 👇 FIX: Unoptimized for crisp logo */}
+            <div className="flex items-center gap-3 text-white">
+              <div className="relative w-14 h-14 shrink-0">
                 <Image 
-                  src="/logo.png" 
+                  src="/logo.png"
                   alt="Al-Adab Logo" 
                   fill
+                  sizes="56px"
                   className="object-contain"
                   unoptimized
                 />
@@ -36,8 +48,9 @@ export default function Footer() {
               <Link href="#" className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center hover:bg-pink-600 hover:text-white transition-colors">
                 <Instagram className="w-4 h-4" />
               </Link>
-              <Link href="#" className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center hover:bg-blue-700 hover:text-white transition-colors">
-                <Linkedin className="w-4 h-4" />
+              {/* 👇 UPDATED: TikTok Icon */}
+              <Link href="#" className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center hover:bg-black hover:text-white transition-colors">
+                <TiktokIcon className="w-4 h-4" />
               </Link>
             </div>
           </div>
@@ -72,7 +85,7 @@ export default function Footer() {
             <ul className="space-y-4 text-sm">
               <li className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-blue-500 shrink-0" />
-                <span>12 Al-Adab Group Of Schools, Gbede-Ogun, Off Akanran Rd., Ibadan.</span>
+                <span>Al-Adab Group Of Schools, Gbede-Ogun Area, Off Akanran Rd., Ibadan.</span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-blue-500 shrink-0" />
@@ -87,7 +100,7 @@ export default function Footer() {
 
         </div>
 
-        <div className="border-t border-slate-900 pt-500 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
+        <div className="border-t border-slate-900 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
           <p>&copy; {new Date().getFullYear()} Al-Adab School. All rights reserved.</p>
           {/* <div className="flex gap-6">
             <Link href="#" className="hover:text-white transition-colors">Terms</Link>

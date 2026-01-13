@@ -1,11 +1,11 @@
 'use client'
 
 import { createStaff } from './actions'
-import { UserPlus, Loader2, X, Shield, GraduationCap } from 'lucide-react'
+import { UserPlus, Loader2, X, Shield, GraduationCap, Crown } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
-export default function AddStaffModal({ onClose, subjects }: { onClose: () => void, subjects: any[] }) {
+export default function AddStaffModal({ onClose, subjects, currentUserRole }: { onClose: () => void, subjects: any[], currentUserRole: string }) {
   const [isSaving, setIsSaving] = useState(false)
   const [role, setRole] = useState('teacher')
 
@@ -20,6 +20,8 @@ export default function AddStaffModal({ onClose, subjects }: { onClose: () => vo
       toast.error(res?.error)
     }
   }
+
+  const isSuperAdmin = currentUserRole === 'admin'
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
@@ -38,25 +40,45 @@ export default function AddStaffModal({ onClose, subjects }: { onClose: () => vo
           
           <div>
             <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Role</label>
-            <div className="grid grid-cols-2 gap-4">
+            <div className={`grid gap-4 ${isSuperAdmin ? 'grid-cols-3' : 'grid-cols-1'}`}>
+              
               <label className="cursor-pointer">
                 <input type="radio" name="role" value="teacher" checked={role === 'teacher'} onChange={() => setRole('teacher')} className="peer sr-only" />
-                <div className="p-3 border rounded-lg text-center peer-checked:border-blue-500 peer-checked:bg-blue-50 hover:bg-slate-50 transition-all"><GraduationCap className="w-6 h-6 mx-auto mb-1 text-slate-400 peer-checked:text-blue-600" /><span className="text-sm font-medium text-slate-600 peer-checked:text-blue-700">Teacher</span></div>
+                <div className="p-2 border rounded-lg text-center peer-checked:border-blue-500 peer-checked:bg-blue-50 hover:bg-slate-50 transition-all flex flex-col items-center">
+                  <GraduationCap className="w-5 h-5 mb-1 text-slate-400 peer-checked:text-blue-600" />
+                  <span className="text-xs font-medium text-slate-600 peer-checked:text-blue-700">Teacher</span>
+                </div>
               </label>
-              <label className="cursor-pointer">
-                <input type="radio" name="role" value="admin" checked={role === 'admin'} onChange={() => setRole('admin')} className="peer sr-only" />
-                <div className="p-3 border rounded-lg text-center peer-checked:border-purple-500 peer-checked:bg-purple-50 hover:bg-slate-50 transition-all"><Shield className="w-6 h-6 mx-auto mb-1 text-slate-400 peer-checked:text-purple-600" /><span className="text-sm font-medium text-slate-600 peer-checked:text-purple-700">Admin</span></div>
-              </label>
+              
+              {isSuperAdmin && (
+                <>
+                  <label className="cursor-pointer">
+                    <input type="radio" name="role" value="principal" checked={role === 'principal'} onChange={() => setRole('principal')} className="peer sr-only" />
+                    <div className="p-2 border rounded-lg text-center peer-checked:border-orange-500 peer-checked:bg-orange-50 hover:bg-slate-50 transition-all flex flex-col items-center">
+                      <Crown className="w-5 h-5 mb-1 text-slate-400 peer-checked:text-orange-600" />
+                      <span className="text-xs font-medium text-slate-600 peer-checked:text-orange-700">Principal</span>
+                    </div>
+                  </label>
+
+                  <label className="cursor-pointer">
+                    <input type="radio" name="role" value="admin" checked={role === 'admin'} onChange={() => setRole('admin')} className="peer sr-only" />
+                    <div className="p-2 border rounded-lg text-center peer-checked:border-purple-500 peer-checked:bg-purple-50 hover:bg-slate-50 transition-all flex flex-col items-center">
+                      <Shield className="w-5 h-5 mb-1 text-slate-400 peer-checked:text-purple-600" />
+                      <span className="text-xs font-medium text-slate-600 peer-checked:text-purple-700">Admin</span>
+                    </div>
+                  </label>
+                </>
+              )}
             </div>
           </div>
 
           {role === 'teacher' && (
             <div className="animate-in slide-in-from-top-2 fade-in duration-300">
               <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Subject Specialization</label>
-              <select name="specialization" className="w-full p-2.5 border rounded-lg bg-white outline-none focus:ring-2 focus:ring-blue-500">
+              <select name="specialization" className="w-full p-2.5 border rounded-lg bg-white">
                 <option value="">Select Subject...</option>
-                {subjects?.map((s: any) => (
-                  <option key={s.name} value={s.name}>{s.name}</option>
+                {subjects?.map((s: any, idx: number) => (
+                  <option key={s.id || idx} value={s.name}>{s.name}</option>
                 ))}
               </select>
             </div>
