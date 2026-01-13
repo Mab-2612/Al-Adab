@@ -72,16 +72,34 @@ export async function deleteSubject(id: string) {
 
 export async function updateClass(id: string, formData: FormData) {
   const supabase = await createClient()
-  const name = formData.get('name') as string
-  const teacherId = formData.get('teacherId') as string || null
+  
+  // 1. Get all selected teacher IDs
+  const teacherIds = formData.getAll('teacherId') as string[]
 
-  const { error } = await supabase
-    .from('classes')
-    .update({ name, class_teacher_id: teacherId })
-    .eq('id', id)
+  // 2. Database Transaction (Simulated)
+  
+  // A. Delete existing assignments for this class
+  const { error: deleteError } = await supabase
+    .from('class_teachers')
+    .delete()
+    .eq('class_id', id)
+  
+  if (deleteError) return { success: false, message: 'Failed to clear old teachers' }
 
-  if (error) return { success: false, message: error.message }
+  // B. Insert new assignments (only if teachers were selected)
+  if (teacherIds.length > 0) {
+    const rows = teacherIds.map(tId => ({
+      class_id: id,
+      teacher_id: tId
+    }))
+
+    const { error: insertError } = await supabase
+      .from('class_teachers')
+      .insert(rows)
+    
+    if (insertError) return { success: false, message: 'Failed to assign new teachers' }
+  }
 
   revalidatePath('/academics/classes')
-  return { success: true, message: 'Class updated successfully' }
+  return { success: true, message: 'Class teachers updated successfully' }
 }

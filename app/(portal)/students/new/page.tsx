@@ -6,11 +6,13 @@ import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 
 export default function AddStudentPage() {
   const [classes, setClasses] = useState<any[]>([])
   const [isSenior, setIsSenior] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     const supabase = createClient()
@@ -21,7 +23,6 @@ export default function AddStudentPage() {
   const handleClassChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const classId = e.target.value
     const cls = classes.find(c => c.id === classId)
-    // Check if class is Senior Secondary
     if (cls && (cls.name.includes('SSS') || cls.section?.includes('Senior'))) {
       setIsSenior(true)
     } else {
@@ -31,13 +32,17 @@ export default function AddStudentPage() {
 
   const handleSubmit = async (formData: FormData) => {
     setIsSaving(true)
-    // Use server action directly
     const result = await createStudent(formData)
     
-    // createStudent redirects on success, so we only handle error here
-    if (result?.error) {
+    if (result?.success) {
+      toast.success(result.message)
+      // 👇 Redirect after success
+      setTimeout(() => {
+        router.push('/students')
+      }, 1000)
+    } else {
       setIsSaving(false)
-      toast.error(result.error)
+      toast.error(result?.error || 'Failed')
     }
   }
 
@@ -59,14 +64,18 @@ export default function AddStudentPage() {
           <div>
             <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">Personal Information</h3>
             <div className="grid md:grid-cols-2 gap-6">
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">Other Names</label>
+                {/* 👇 Placeholder hint for Surname First */}
+                <input name="lastName" required type="text" placeholder="Surname First (e.g. Musa)" className="w-full p-3 border border-slate-200 rounded-lg outline-none" />
+              </div>
+
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">First Name</label>
                 <input name="firstName" required type="text" placeholder="e.g. Ibrahim" className="w-full p-3 border border-slate-200 rounded-lg outline-none" />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Other Names</label>
-                <input name="lastName" required type="text" placeholder="e.g. Musa Adebayo" className="w-full p-3 border border-slate-200 rounded-lg outline-none" />
-              </div>
+
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">Gender</label>
                 <select name="gender" className="w-full p-3 border border-slate-200 rounded-lg outline-none bg-white">
@@ -86,7 +95,7 @@ export default function AddStudentPage() {
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">Admission Number</label>
-                <input name="admissionNumber" required type="text" placeholder="ADAB/..." className="w-full p-3 border border-slate-200 rounded-lg outline-none font-mono" />
+                <input name="admissionNumber" required type="text" defaultValue="ALCCO/" placeholder="ALCCO/2026/..." className="w-full p-3 border border-slate-200 rounded-lg outline-none font-mono" />
               </div>
               
               <div className="space-y-2">
@@ -99,7 +108,6 @@ export default function AddStudentPage() {
                 </select>
               </div>
 
-              {/* Conditional Department */}
               {isSenior && (
                 <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
                   <label className="text-sm font-medium text-slate-700">Department</label>

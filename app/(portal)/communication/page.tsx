@@ -1,16 +1,35 @@
 import { createClient } from '@/utils/supabase/server'
-import { Bell, Megaphone, Trash2, Users, User, Briefcase } from 'lucide-react'
-import CreateNoticeForm from './CreateNoticeForm' // Client Component
+import { Megaphone, Trash2 } from 'lucide-react'
+import CreateNoticeForm from './CreateNoticeForm'
 import { deleteNotice } from './actions'
+
+export const dynamic = 'force-dynamic'
 
 export default async function CommunicationPage() {
   const supabase = await createClient()
 
-  // Fetch all notices (Admin sees everything)
-  const { data: notices } = await supabase
+  // 1. Get Current User Role
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user?.id)
+    .single()
+  
+  // 👇 CHECK: Only Admin & Principal can post
+  const canPost = profile?.role === 'admin' || profile?.role === 'principal'
+
+  // 2. Fetch Notices based on permission
+  // Admins see all. Students/Teachers see only what's for them or 'all'.
+  let query = supabase
     .from('notices')
     .select('*, profiles(first_name, last_name)')
     .order('created_at', { ascending: false })
+
+  // (Optional: You could filter the list view here too, but RLS handles security. 
+  // We'll just filter what they can SEE visually to keep it clean)
+  
+  const { data: notices } = await query
 
   return (
     <div className="max-w-5xl mx-auto pb-20">
@@ -21,19 +40,29 @@ export default async function CommunicationPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Communication Center</h1>
-          <p className="text-slate-500">Post announcements to students and staff.</p>
+          <p className="text-slate-500">School announcements and updates.</p>
         </div>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
         
-        {/* LEFT: Create Form */}
-        <div className="lg:col-span-1">
-           <CreateNoticeForm />
-        </div>
+        {/* LEFT: Create Form (HIDDEN for Students/Teachers) */}
+        {canPost ? (
+          <div className="lg:col-span-1">
+             <CreateNoticeForm />
+          </div>
+        ) : (
+          // Optional: Show a "Read Only" info box for students
+          <div className="lg:col-span-1">
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-blue-800 text-sm">
+              <p className="font-bold mb-1">Notice Board</p>
+              <p>Check here regularly for important updates from the school administration.</p>
+            </div>
+          </div>
+        )}
 
         {/* RIGHT: History List */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className={canPost ? "lg:col-span-2 space-y-4" : "lg:col-span-2 lg:col-start-2 space-y-4"}>
           <h3 className="font-bold text-slate-900">Recent Announcements</h3>
           
           {notices?.map((notice) => (
@@ -52,27 +81,29 @@ export default async function CommunicationPage() {
                   </span>
                 </div>
                 
-                {/* Delete Button */}
-                <form action={async () => {
-                  'use server'
-                  await deleteNotice(notice.id)
-                }}>
-                  <button className="p-1.5 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </form>
+                {/* Delete Button (Only for Admin/Principal) */}
+                {canPost && (
+                  <form action={async () => {
+                    'use server'
+                    await deleteNotice(notice.id)
+                  }}>
+                    <button className="p-1.5 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </form>
+                )}
               </div>
 
               <h4 className="font-bold text-slate-900 text-lg mb-1">{notice.title}</h4>
               <p className="text-slate-600 text-sm leading-relaxed">{notice.content}</p>
               
               <p className="text-xs text-slate-400 mt-4 flex items-center gap-1">
-                Posted by {notice.profiles?.first_name}
+                Posted by {notice.profiles?.first_name || 'Admin'}
               </p>
             </div>
           ))}
 
-          {notices?.length === 0 && (
+          {(!notices || notices.length === 0) && (
             <div className="text-center py-12 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-300">
               No announcements posted yet.
             </div>

@@ -6,18 +6,20 @@ import SubjectList from './SubjectList'
 export default async function SubjectsPage() {
   const supabase = await createClient()
 
+  // 1. Check Permissions
   const { data: { user } } = await supabase.auth.getUser()
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user?.id).single()
   
-  const isAdmin = profile?.role === 'admin'
+  // 👇 FIX: Allow Admin OR Principal
+  const canManage = profile?.role === 'admin' || profile?.role === 'principal'
 
-  // 1. Fetch Subjects with Teacher Names
+  // 2. Fetch Subjects with Teacher Names
   const { data: subjects } = await supabase
     .from('subjects')
-    .select('*, profiles(first_name, last_name)') // Join profiles to get teacher name
+    .select('*, profiles(first_name, last_name)')
     .order('name')
 
-  // 2. Fetch Teachers (For the dropdown)
+  // 3. Fetch Teachers (For the dropdown)
   const { data: teachers } = await supabase
     .from('profiles')
     .select('id, first_name, last_name')
@@ -31,16 +33,17 @@ export default async function SubjectsPage() {
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Subject Management</h1>
           <p className="text-slate-500 mt-1">
-            {isAdmin 
+            {canManage 
               ? "Define curriculum and assign subject heads." 
               : "View the list of subjects offered."}
           </p>
         </div>
       </div>
 
-      <div className={`grid gap-8 ${isAdmin ? 'lg:grid-cols-3' : 'lg:grid-cols-1'}`}>
+      <div className={`grid gap-8 ${canManage ? 'lg:grid-cols-3' : 'lg:grid-cols-1'}`}>
         
-        {isAdmin && (
+        {/* LEFT: Add Subject Form (ADMIN & PRINCIPAL) */}
+        {canManage && (
           <div className="lg:col-span-1">
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 sticky top-24">
               <h2 className="font-bold text-slate-900 mb-6 flex items-center gap-2">
@@ -53,17 +56,18 @@ export default async function SubjectsPage() {
           </div>
         )}
 
-        <div className={isAdmin ? 'lg:col-span-2' : 'lg:col-span-1'}>
+        {/* RIGHT: Subject List */}
+        <div className={canManage ? 'lg:col-span-2' : 'lg:col-span-1'}>
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
               <h3 className="font-bold text-slate-700">All Subjects ({subjects?.length})</h3>
             </div>
             
-            {/* Pass teachers to the list (for the Edit modal) */}
+            {/* Pass permission to the list (controls Edit/Delete visibility) */}
             <SubjectList 
               subjects={subjects || []} 
               teachers={teachers || []} 
-              isAdmin={isAdmin} 
+              isAdmin={canManage} 
             />
             
           </div>

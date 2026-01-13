@@ -4,12 +4,14 @@ import { createClient } from '@/utils/supabase/client'
 import { updateStudent, generateStudentLogin, getStudentLoginEmail } from '../../actions'
 import { ArrowLeft, Save, Loader2, KeyRound, RefreshCcw, Copy, Check } from 'lucide-react'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, useRouter } from 'next/navigation' // 👈 Import useRouter
 import { useEffect, useState, use } from 'react'
 import { toast } from 'sonner'
 
 export default function EditStudentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
+  const router = useRouter() // 👈 Init Router
+  
   const [student, setStudent] = useState<any>(null)
   const [classes, setClasses] = useState<any[]>([])
   const [isSenior, setIsSenior] = useState(false)
@@ -38,9 +40,8 @@ export default function EditStudentPage({ params }: { params: Promise<{ id: stri
           setIsSenior(true)
         }
         
-        // 👇 FIX: Fetch email and ensure it is not undefined
         const email = await getStudentLoginEmail(sData.profile_id)
-        setLoginEmail(email || null) // Use 'null' if undefined to satisfy TypeScript
+        setLoginEmail(email || null)
       }
       setLoading(false)
     }
@@ -57,17 +58,25 @@ export default function EditStudentPage({ params }: { params: Promise<{ id: stri
     }
   }
 
+  // 👇 UPDATED: Handle Submit and Redirect
   const handleSubmit = async (formData: FormData) => {
     setIsSaving(true)
     const result = await updateStudent(student.id, student.profile_id, formData)
-    if (result?.error) {
+    
+    if (result?.success) {
+      toast.success(result.message)
+      // Redirect after short delay
+      setTimeout(() => {
+        router.push('/students')
+      }, 500)
+    } else {
       setIsSaving(false)
-      toast.error(result.error)
+      toast.error(result?.error || 'Failed to update')
     }
   }
 
   const handleLoginReset = async () => {
-    if(!confirm(`This will change the student's login email to an official '@aladab.ng' address and reset password to 'password123'. Continue?`)) return
+    if(!confirm(`This will reset the student's password to 'password123'. Continue?`)) return
     
     setIsResetting(true)
     const res = await generateStudentLogin(student.id, student.profile_id, student.admission_number)
@@ -75,9 +84,6 @@ export default function EditStudentPage({ params }: { params: Promise<{ id: stri
 
     if (res?.success) {
       toast.success(res.message)
-      // Refresh the email display
-      const email = await getStudentLoginEmail(student.profile_id)
-      setLoginEmail(email || null) // Fixed here too
     } else {
       toast.error(res?.error)
     }
@@ -203,7 +209,7 @@ export default function EditStudentPage({ params }: { params: Promise<{ id: stri
 
              <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between border-t border-slate-200 pt-4">
                <p className="text-xs text-slate-500 max-w-sm">
-                 Use this if the student forgot their email or needs to migrate to the new official format.
+                 Need to reset credentials?
                </p>
                <button 
                  type="button" 
@@ -212,7 +218,7 @@ export default function EditStudentPage({ params }: { params: Promise<{ id: stri
                  className="text-xs font-bold text-white bg-purple-600 px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 shadow-sm whitespace-nowrap"
                >
                  {isResetting ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCcw className="w-3 h-3" />}
-                 Reset Login & Password
+                 Reset Password Only
                </button>
              </div>
           </div>

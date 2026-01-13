@@ -1,35 +1,48 @@
 'use client'
 
 import { updateClass } from '../actions'
-import { Loader2, Pencil } from 'lucide-react'
+import { Loader2, Pencil, X, Save } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import TeacherSelector from './TeacherSelector' // 👈 Import
 
 export default function EditClassModal({ cls, teachers }: { cls: any, teachers: any[] }) {
   const [isOpen, setIsOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
-  const handleSubmit = async (formData: FormData) => {
+  // Extract initial IDs from the joined data
+  // cls.class_teachers is an array of objects: [{ teacher_id: "..." }, ...]
+  const initialIds = cls.class_teachers?.map((t: any) => t.teacher_id) || []
+
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
     setIsSaving(true)
+
+    const formData = new FormData(e.currentTarget)
     const res = await updateClass(cls.id, formData)
+    
     setIsSaving(false)
 
     if (res?.success) {
       toast.success(res.message)
       setIsOpen(false)
     } else {
-      toast.error(res?.message || 'Error')
+      toast.error(res?.message || 'Error updating class')
     }
   }
 
-  // Helper to open modal without triggering parent Link
   const handleOpen = (e: React.MouseEvent) => {
-    e.preventDefault() // 👈 STOP Navigation
-    e.stopPropagation() // 👈 STOP Bubble
+    e.preventDefault() 
+    e.stopPropagation()
     setIsOpen(true)
   }
 
-  // Prevent clicks inside modal form from bubbling
+  const handleClose = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsOpen(false)
+  }
+
   const handleModalClick = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -39,44 +52,58 @@ export default function EditClassModal({ cls, teachers }: { cls: any, teachers: 
     return (
       <button 
         onClick={handleOpen}
-        className="w-full py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 flex items-center justify-center gap-2 transition-colors relative z-10"
+        className="w-full py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-white hover:text-purple-600 hover:border-purple-200 shadow-sm flex items-center justify-center gap-2 transition-all"
       >
-        <Pencil className="w-3 h-3" /> Assign Teacher
+        <Pencil className="w-3 h-3" /> Assign Teachers
       </button>
     )
   }
 
   return (
     <div 
-      className="bg-slate-50 p-4 rounded-lg animate-in fade-in zoom-in duration-200 relative z-20 cursor-default"
-      onClick={handleModalClick} // Stop clicks inside form from navigating
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200 cursor-default" 
+      onClick={handleClose}
     >
-      <form action={handleSubmit} className="space-y-3">
-        <input type="hidden" name="name" value={cls.name} />
+      <div 
+        className="bg-white rounded-xl shadow-xl max-w-sm w-full overflow-hidden relative"
+        onClick={handleModalClick}
+      >
         
-        <div>
-          <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Class Teacher</label>
-          <select name="teacherId" defaultValue={cls.class_teacher_id || ''} className="w-full p-2 border rounded-md text-sm bg-white">
-            <option value="">No Assignment</option>
-            {teachers.map((t) => (
-              <option key={t.id} value={t.id}>{t.first_name} {t.last_name}</option>
-            ))}
-          </select>
+        <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+           <h3 className="font-bold text-slate-800 flex items-center gap-2">
+             Edit Class: <span className="text-purple-600">{cls.name}</span>
+           </h3>
+           <button type="button" onClick={handleClose} className="p-1 hover:bg-slate-200 rounded-full text-slate-500">
+             <X className="w-5 h-5" />
+           </button>
         </div>
 
-        <div className="flex gap-2">
-          <button 
-            type="button" 
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsOpen(false); }} 
-            className="flex-1 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-200 rounded"
-          >
-            Cancel
-          </button>
-          <button disabled={isSaving} className="flex-1 py-1.5 bg-blue-600 text-white rounded text-xs font-bold hover:bg-blue-700 disabled:opacity-50">
-            {isSaving ? <Loader2 className="w-3 h-3 animate-spin mx-auto" /> : 'Save'}
-          </button>
+        <div className="p-6">
+          <form onSubmit={onSubmit} className="space-y-4">
+            
+            {/* 👇 NEW: Multi-Select Component */}
+            <TeacherSelector teachers={teachers} initialSelected={initialIds} />
+
+            <div className="pt-2 flex gap-3">
+              <button 
+                type="button" 
+                onClick={handleClose} 
+                disabled={isSaving}
+                className="flex-1 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-lg border border-transparent"
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit"
+                disabled={isSaving} 
+                className="flex-1 py-2.5 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isSaving ? <Loader2 className="w-3 h-3 animate-spin mx-auto" /> : <><Save className="w-4 h-4" /> Save</>}
+              </button>
+            </div>
+          </form>
         </div>
-      </form>
+      </div>
     </div>
   )
 }
