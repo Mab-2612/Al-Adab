@@ -118,9 +118,9 @@ export default function LoginPage() {
                   placeholder="••••••••"
                 />
               </div>
-              <div className="flex justify-end mt-2">
+              {/* <div className="flex justify-end mt-2">
                 <a href="#" className="text-sm text-blue-600 hover:text-blue-500">Forgot password?</a>
-              </div>
+              </div> */}
             </div>
 
             {/* Submit Button */}
