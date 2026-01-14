@@ -1,18 +1,17 @@
 'use client'
 
 import { createStudent } from '../actions'
-import { ArrowLeft, Save, Loader2 } from 'lucide-react'
+import { ArrowLeft, Save, Loader2, Users } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { toast } from 'sonner'
-import { useRouter } from 'next/navigation'
 
 export default function AddStudentPage() {
   const [classes, setClasses] = useState<any[]>([])
   const [isSenior, setIsSenior] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const router = useRouter()
+  const formRef = useRef<HTMLFormElement>(null)
 
   useEffect(() => {
     const supabase = createClient()
@@ -30,35 +29,48 @@ export default function AddStudentPage() {
     }
   }
 
-  const handleSubmit = async (formData: FormData) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
     setIsSaving(true)
+    
+    const formData = new FormData(e.currentTarget)
     const result = await createStudent(formData)
     
+    setIsSaving(false)
+
     if (result?.success) {
       toast.success(result.message)
-      // 👇 Redirect after success
-      setTimeout(() => {
-        router.push('/students')
-      }, 1000)
+      formRef.current?.reset() // Just reset, don't redirect
+      setIsSenior(false)
     } else {
-      setIsSaving(false)
       toast.error(result?.error || 'Failed')
     }
   }
 
   return (
     <div className="max-w-3xl mx-auto pb-20">
-      <div className="flex items-center gap-4 mb-8">
-        <Link href="/students" className="p-2 hover:bg-slate-100 rounded-full text-slate-500">
-          <ArrowLeft className="w-6 h-6" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">New Admission</h1>
-          <p className="text-slate-500">Register a new student into Al-Adab.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div className="flex items-center gap-4">
+          <Link href="/students" className="p-2 hover:bg-slate-100 rounded-full text-slate-500">
+            <ArrowLeft className="w-6 h-6" />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">New Admission</h1>
+            <p className="text-slate-500">Register a new student into Al-Adab.</p>
+          </div>
         </div>
+        
+        {/* 👇 NEW: Link to Bulk Upload */}
+        <Link 
+          href="/students/bulk" 
+          className="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg font-bold text-sm border border-blue-100 hover:bg-blue-100 transition-colors flex items-center gap-2"
+        >
+          <Users className="w-4 h-4" />
+          Bulk Upload Mode
+        </Link>
       </div>
 
-      <form action={handleSubmit} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <form ref={formRef} onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="p-6 md:p-8 space-y-8">
           
           <div>
@@ -66,26 +78,25 @@ export default function AddStudentPage() {
             <div className="grid md:grid-cols-2 gap-6">
               
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Other Names</label>
-                {/* 👇 Placeholder hint for Surname First */}
-                <input name="lastName" required type="text" placeholder="Surname First (e.g. Musa)" className="w-full p-3 border border-slate-200 rounded-lg outline-none" />
+                <label className="text-sm font-medium text-slate-700">First Name</label>
+                <input name="firstName" required type="text" placeholder="e.g. Ibrahim" className="w-full p-3 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">First Name</label>
-                <input name="firstName" required type="text" placeholder="e.g. Ibrahim" className="w-full p-3 border border-slate-200 rounded-lg outline-none" />
+                <label className="text-sm font-medium text-slate-700">Other Names</label>
+                <input name="lastName" required type="text" placeholder="Surname First (e.g. Musa Adebayo)" className="w-full p-3 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">Gender</label>
-                <select name="gender" className="w-full p-3 border border-slate-200 rounded-lg outline-none bg-white">
+                <select name="gender" className="w-full p-3 border border-slate-200 rounded-lg outline-none bg-white focus:ring-2 focus:ring-blue-500">
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
                 </select>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">Date of Birth</label>
-                <input name="dob" type="date" className="w-full p-3 border border-slate-200 rounded-lg outline-none" />
+                <input name="dob" type="date" className="w-full p-3 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
             </div>
           </div>
@@ -95,12 +106,12 @@ export default function AddStudentPage() {
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">Admission Number</label>
-                <input name="admissionNumber" required type="text" defaultValue="ALCCO/" placeholder="ALCCO/2026/..." className="w-full p-3 border border-slate-200 rounded-lg outline-none font-mono" />
+                <input name="admissionNumber" required type="text" defaultValue="ALCCO/" placeholder="ALCCO/2026/..." className="w-full p-3 border border-slate-200 rounded-lg outline-none font-mono focus:ring-2 focus:ring-blue-500" />
               </div>
               
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">Assign Class</label>
-                <select name="classId" required onChange={handleClassChange} className="w-full p-3 border border-slate-200 rounded-lg outline-none bg-white">
+                <select name="classId" required onChange={handleClassChange} className="w-full p-3 border border-slate-200 rounded-lg outline-none bg-white focus:ring-2 focus:ring-blue-500">
                   <option value="">Select a Class...</option>
                   {classes.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
@@ -127,11 +138,11 @@ export default function AddStudentPage() {
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">Parent Email</label>
-                <input name="email" type="email" placeholder="parent@example.com" className="w-full p-3 border border-slate-200 rounded-lg outline-none" />
+                <input name="email" type="email" placeholder="parent@example.com" className="w-full p-3 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">Phone Number</label>
-                <input name="phone" type="tel" placeholder="080..." className="w-full p-3 border border-slate-200 rounded-lg outline-none" />
+                <input name="phone" type="tel" placeholder="080..." className="w-full p-3 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
             </div>
           </div>
