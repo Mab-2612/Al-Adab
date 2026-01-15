@@ -6,40 +6,57 @@ import { ArrowLeft, Upload, Loader2, CheckCircle, AlertTriangle } from 'lucide-r
 import Link from 'next/link'
 import { bulkCreateStudents } from '../actions'
 import { toast } from 'sonner'
+import SpreadsheetInput from './SpreadsheetInput'
 
 export default function BulkUploadPage() {
   const [classes, setClasses] = useState<any[]>([])
   const [classId, setClassId] = useState('')
-  const [names, setNames] = useState('')
+  const [isSenior, setIsSenior] = useState(false)
+  
+  const [studentData, setStudentData] = useState<any[]>([])
+  
   const [isProcessing, setIsProcessing] = useState(false)
   const [results, setResults] = useState<any>(null)
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.from('classes').select('id, name').order('name')
+    supabase.from('classes').select('id, name, section').order('name')
       .then(({ data }) => setClasses(data || []))
   }, [])
+
+  const handleClassChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = e.target.value
+    setClassId(id)
+    const cls = classes.find(c => c.id === id)
+    if (cls && (cls.name.includes('SSS') || cls.section?.includes('Senior'))) {
+      setIsSenior(true)
+    } else {
+      setIsSenior(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!classId) return toast.error('Please select a class')
-    if (!names.trim()) return toast.error('Please enter student data')
+    
+    // Filter out empty rows (where surname is empty)
+    const validRows = studentData.filter(s => s.surname.trim() !== '')
+    if (validRows.length === 0) return toast.error('Please enter at least one student')
 
     setIsProcessing(true)
-    const res = await bulkCreateStudents(classId, names)
+    const res = await bulkCreateStudents(classId, validRows)
     setIsProcessing(false)
 
     if (res?.success) {
       toast.success(res.message)
       setResults(res)
-      setNames('') // Clear input
     } else {
       toast.error('Bulk upload failed')
     }
   }
 
   return (
-    <div className="max-w-4xl mx-auto pb-20">
+    <div className="max-w-6xl mx-auto pb-20">
       
       <div className="flex items-center gap-4 mb-8">
         <Link href="/students" className="p-2 hover:bg-slate-100 rounded-full text-slate-500">
@@ -47,43 +64,19 @@ export default function BulkUploadPage() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Bulk Admission</h1>
-          <p className="text-slate-500">Add multiple students using spreadsheet data.</p>
+          <p className="text-slate-500">Add multiple students to a class via spreadsheet.</p>
         </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="p-6 md:p-8 space-y-6">
           
-          {/* INSTRUCTIONS */}
-          <div className="bg-blue-50 border border-blue-100 rounded-lg p-5 text-sm text-blue-800">
-            <p className="font-bold mb-2 text-base">Spreadsheet Format Guide:</p>
-            <p className="mb-2">Enter student details <strong>one per line</strong>, separated by <strong>commas</strong>.</p>
-            
-            <div className="bg-white/50 p-4 rounded border border-blue-100 font-mono text-xs space-y-2 overflow-x-auto">
-              <p className="font-bold text-slate-500 uppercase tracking-wide">
-                Surname, FirstName, OtherNames, Gender, DOB(YYYY-MM-DD), Phone, Department
-              </p>
-              <div className="space-y-1 text-slate-700">
-                <p>Musa, Ibrahim, Aliyu, Male, 2010-05-20, 08012345678</p>
-                <p>Adeleke, Sarah, , Female, 2011-02-14, 08098765432, Science</p>
-                <p>Okonkwo, Chukwudi, David, Male, 2010-09-01, 09011223344, Commercial</p>
-              </div>
-            </div>
-            
-            <ul className="mt-4 space-y-1 list-disc pl-5 text-xs">
-              <li><strong>Surname & FirstName:</strong> Required.</li>
-              <li><strong>Department:</strong> Required for Senior Classes (Science, Arts, Commercial).</li>
-              <li><strong>DOB format:</strong> Year-Month-Day (e.g. 2010-01-31).</li>
-              <li><strong>Missing Info:</strong> Leave blank between commas (e.g., `Surname, Name, , Male`).</li>
-            </ul>
-          </div>
-
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
+            <div className="max-w-md">
               <label className="text-sm font-medium text-slate-700 mb-1 block">Target Class</label>
               <select 
                 value={classId} 
-                onChange={(e) => setClassId(e.target.value)} 
+                onChange={handleClassChange} 
                 required 
                 className="w-full p-3 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white"
               >
@@ -94,27 +87,16 @@ export default function BulkUploadPage() {
               </select>
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-slate-700 mb-1 block">Paste Data (CSV Format)</label>
-              <textarea 
-                value={names}
-                onChange={(e) => setNames(e.target.value)}
-                required 
-                rows={12} 
-                placeholder={`Musa, Ibrahim, , Male, 2010-05-12, 08012345678\nAdeleke, Sarah, Bisi, Female, 2011-02-14, 08099998888, Science`}
-                className="w-full p-4 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm leading-relaxed"
-              ></textarea>
-              <div className="flex justify-end mt-2">
-                <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded">
-                  {names.split('\n').filter(n => n.trim()).length} rows detected
-                </span>
-              </div>
-            </div>
+            {/* 👇 NEW SPREADSHEET COMPONENT */}
+            <SpreadsheetInput 
+               isSenior={isSenior} 
+               onDataChange={setStudentData} 
+            />
 
             <button 
               type="submit" 
               disabled={isProcessing} 
-              className="w-full py-3 bg-slate-900 text-white rounded-lg font-bold hover:bg-slate-800 disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-slate-900/10 mt-8"
             >
               {isProcessing ? <Loader2 className="w-5 h-5 animate-spin"/> : <><Upload className="w-5 h-5" /> Process Bulk Admission</>}
             </button>
