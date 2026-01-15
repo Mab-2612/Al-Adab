@@ -4,31 +4,12 @@ import { createAdminClient } from '@/utils/supabase/admin'
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-// Duplicate helper for self-containment within this action file
-async function generateUniqueEmail(supabase: any, firstName: string, lastName: string) {
+// Helper to generate base email
+function getBaseEmail(firstName: string, lastName: string) {
   const cleanFirst = firstName.trim().toLowerCase().replace(/[^a-z0-9]/g, '')
   const cleanLast = lastName.trim().toLowerCase().replace(/[^a-z0-9]/g, '')
-  
   const initial = cleanLast.charAt(0)
-  // 👇 CHANGED: Using hyphen instead of dot
-  const baseUsername = `${initial}-${cleanFirst}`
-  const domain = 'aladab.ng'
-  
-  const { data: existingUsers } = await supabase
-    .from('profiles')
-    .select('email')
-    .ilike('email', `${baseUsername}%@${domain}`)
-
-  if (!existingUsers || existingUsers.length === 0) return `${baseUsername}@${domain}`
-
-  const suffixes = existingUsers.map((u: any) => {
-    const localPart = u.email.split('@')[0]
-    const suffix = localPart.replace(baseUsername, '')
-    return suffix === '' ? 0 : parseInt(suffix) || 0
-  })
-
-  const maxSuffix = Math.max(...suffixes)
-  return `${baseUsername}${maxSuffix + 1}@${domain}`
+  return `${initial}-${cleanFirst}`
 }
 
 export async function approveApplication(applicationId: string) {
@@ -45,15 +26,20 @@ export async function approveApplication(applicationId: string) {
   if (fetchError || !app) return { error: 'Application not found.' }
 
   // 2. Generate Admission Number
-  const admissionNumber = `ADAB/${new Date().getFullYear()}/${Math.floor(1000 + Math.random() * 9000)}`
+  const admissionNumber = `ALCCO/${new Date().getFullYear()}/${Math.floor(1000 + Math.random() * 9000)}`
   const defaultPassword = 'password123'
 
   // 3. Generate Friendly Email
-  let loginEmail = await generateUniqueEmail(supabaseAdmin, app.first_name, app.last_name)
-
-  // 4. Create Auth User
-  let authData, authError;
-  for (let i = 0; i < 3; i++) {
+  const baseUsername = getBaseEmail(app.first_name, app.last_name)
+  const domain = 'aladab.ng'
+  
+  let loginEmail = `${baseUsername}@${domain}`
+  let authData, authError
+  
+  // Retry loop for email generation
+  for (let i = 0; i < 10; i++) {
+    if (i > 0) loginEmail = `${baseUsername}${i}@${domain}`
+    
     const result = await supabaseAdmin.auth.admin.createUser({
       email: loginEmail,
       password: defaultPassword,
@@ -61,14 +47,13 @@ export async function approveApplication(applicationId: string) {
       user_metadata: { first_name: app.first_name, last_name: app.last_name }
     })
     
-    if (result.error && result.error.message.includes('already registered')) {
-       const base = loginEmail.split('@')[0]
-       loginEmail = `${base}${Math.floor(Math.random() * 99)}@aladab.ng`
-       continue;
+    if (result.error) {
+       if (result.error.message.includes('registered')) continue
+       authError = result.error
+       break
     }
-    authData = result.data;
-    authError = result.error;
-    break;
+    authData = result.data
+    break
   }
 
   if (authError) return { error: 'Auth creation failed: ' + authError.message }
@@ -76,19 +61,20 @@ export async function approveApplication(applicationId: string) {
   const newUserId = authData?.user?.id
   if (!newUserId) return { error: 'Failed to create user ID' }
 
-  // 5. Create Profile
+  // 4. Create Profile
   const { error: profileError } = await supabaseAdmin.from('profiles').upsert({
     id: newUserId,
     first_name: app.first_name,
     last_name: app.last_name,
     role: 'student',
     phone_number: app.phone,
-    email: app.email // Important: Keep parent email here for notifications
+    email: loginEmail // 👈 FIX: Save Student Login Email, NOT app.email (Parent)
   })
 
   if (profileError) return { error: 'Profile creation failed: ' + profileError.message }
 
-  // 6. Create Student Record
+  // 5. Create Student Record
+  // (Optional: We could save app.email here as 'parent_email' if we added that column to students table)
   const { error: studentError } = await supabaseAdmin.from('students').insert({
     profile_id: newUserId,
     admission_number: admissionNumber,
@@ -103,7 +89,7 @@ export async function approveApplication(applicationId: string) {
     return { error: 'Student record creation failed: ' + studentError.message }
   }
 
-  // 7. Update Admission Status
+  // 6. Update Admission Status
   await supabaseAdmin
     .from('admissions')
     .update({ status: 'approved' })

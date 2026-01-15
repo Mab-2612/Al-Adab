@@ -2,19 +2,20 @@ import { createClient } from '@/utils/supabase/server'
 import { Plus } from 'lucide-react'
 import AddSubjectForm from './AddSubjectForm'
 import SubjectList from './SubjectList'
+import SubjectToolbar from './SubjectToolbar' // 👈 Import new component
 
-export default async function SubjectsPage() {
+export default async function SubjectsPage({ searchParams }: { searchParams: Promise<{ level?: string, dept?: string }> }) {
   const supabase = await createClient()
+  const params = await searchParams
 
   // 1. Check Permissions
   const { data: { user } } = await supabase.auth.getUser()
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user?.id).single()
   
-  // 👇 FIX: Allow Admin OR Principal
   const canManage = profile?.role === 'admin' || profile?.role === 'principal'
 
   // 2. Fetch Subjects with Teacher Names
-  const { data: subjects } = await supabase
+  let { data: subjects } = await supabase
     .from('subjects')
     .select('*, profiles(first_name, last_name)')
     .order('name')
@@ -25,6 +26,21 @@ export default async function SubjectsPage() {
     .select('id, first_name, last_name')
     .eq('role', 'teacher')
     .order('first_name')
+
+  // 4. 👇 FILTER LOGIC
+  if (subjects) {
+    // Filter by Level (Category)
+    if (params.level) {
+      subjects = subjects.filter(s => 
+        s.category === params.level || s.category === 'All'
+      )
+    }
+
+    // Filter by Department Scope
+    if (params.dept) {
+      subjects = subjects.filter(s => s.department_target === params.dept)
+    }
+  }
 
   return (
     <div className="max-w-5xl mx-auto pb-20">
@@ -50,7 +66,6 @@ export default async function SubjectsPage() {
                 <Plus className="w-5 h-5 text-blue-600" />
                 Add New Subject
               </h2>
-              {/* Pass teachers to the form */}
               <AddSubjectForm teachers={teachers || []} />
             </div>
           </div>
@@ -59,11 +74,14 @@ export default async function SubjectsPage() {
         {/* RIGHT: Subject List */}
         <div className={canManage ? 'lg:col-span-2' : 'lg:col-span-1'}>
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+            <div className="p-4 bg-white border-b border-slate-100 flex justify-between items-center">
               <h3 className="font-bold text-slate-700">All Subjects ({subjects?.length})</h3>
             </div>
+
+            {/* 👇 INSERT TOOLBAR HERE */}
+            <SubjectToolbar />
             
-            {/* Pass permission to the list (controls Edit/Delete visibility) */}
+            {/* List */}
             <SubjectList 
               subjects={subjects || []} 
               teachers={teachers || []} 

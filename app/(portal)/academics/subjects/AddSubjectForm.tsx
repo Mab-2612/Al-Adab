@@ -81,7 +81,7 @@ export default function AddSubjectForm({ teachers }: { teachers: any[] }) {
         <label htmlFor="compulsory" className="text-sm text-slate-700 select-none">Mark as Compulsory (Core)</label>
       </div>
 
-      <button disabled={isPending} type="submit" className="w-full py-2.5 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 mt-2 disabled:opacity-70">
+      <button disabled={isPending} type="submit" className="w-full py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 mt-2 disabled:opacity-70">
         {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
         Save Subject
       </button>

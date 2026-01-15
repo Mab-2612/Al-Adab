@@ -15,7 +15,8 @@ import {
   Megaphone,
   Globe,
   Shield,
-  Loader2
+  Loader2,
+  Calendar
 } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -29,6 +30,7 @@ const allMenuItems = [
   { icon: BookOpen, label: 'Academics', href: '/academics/subjects', roles: ['admin', 'principal', 'teacher'] },
   { icon: Users, label: 'Classes', href: '/academics/classes', roles: ['admin', 'principal', 'teacher'] },
   { icon: CalendarCheck, label: 'Attendance', href: '/attendance', roles: ['admin', 'teacher'] }, // Principal hidden
+  { icon: Calendar, label: 'Timetable', href: '/academics/timetable', roles: ['admin', 'principal', 'teacher'] },
   { icon: GraduationCap, label: 'Results', href: '/results/upload', roles: ['admin', 'principal', 'teacher'] },
   { icon: CreditCard, label: 'Finance', href: '/finance', roles: ['admin'] }, // Principal hidden
   { icon: FileText, label: 'Admissions', href: '/admissions-portal', roles: ['admin'] }, // Principal hidden
